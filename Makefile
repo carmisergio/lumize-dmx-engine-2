@@ -21,10 +21,10 @@ EXECUTABLE = LumizeDmxEngine
 
 
 # Main executable target
-$(EXECUTABLE): $(BUILD)/main.o
+$(EXECUTABLE): $(BUILD)/main.o $(BUILD)/dmxsender.o
 	@ echo "Linking main executable..."
 	@ mkdir -p $(BUILD)
-	@ $(LD) -o LumizeDmxEngine $(PKG_CONFIG) $(BUILD)/main.o
+	@ $(LD) -o LumizeDmxEngine $(PKG_CONFIG) $(BUILD)/main.o $(BUILD)/dmxsender.o
 	@ echo "Build complete!"
 
 $(BUILD)/main.o: $(SRC)/main.cpp
@@ -32,6 +32,12 @@ $(BUILD)/main.o: $(SRC)/main.cpp
 	@ mkdir -p $(BUILD)
 	@ $(CC) $(CFLAGS) -o $(BUILD)/main.o $(SRC)/main.cpp
 	@ echo "Finished compilation for main.cpp"
+
+$(BUILD)/dmxsender.o: $(SRC)/dmxsender.cpp $(SRC)/dmxsender.h
+	@ echo "Compiling dmxsender.cpp..."
+	@ mkdir -p $(BUILD)
+	@ $(CC) $(CFLAGS) -o $(BUILD)/dmxsender.o $(SRC)/dmxsender.cpp
+	@ echo "Finished compilation for dmxsender.cpp"
 
 # Clean all build files
 clean:

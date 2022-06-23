@@ -7,8 +7,17 @@
 
 #include <iostream>
 
+#include "dmxsender.h" // DMXSender class
+
 int main() {
-  std::cout << "Everything works fine!" << std::endl;
+  DMXSender dmxsender(50); // Initialize DMX Sender with 50 channels
+
+  for(int i = 0; i < 20; i++) {
+    std::cout << "Doing lighting things..." << std::endl;
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  }
+
+  dmxsender.stop();
 
   return 0;
 }
