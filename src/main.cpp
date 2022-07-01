@@ -6,16 +6,36 @@
  */
 
 #include <iostream>
+#include <unistd.h>
 
 #include "dmxsender.h" // DMXSender class
+
+/*
+ * Test fades
+ */
+void dmx_fades_test(DMXSender &dmxsender) {
+  unsigned char dmx_buffer[512];
+  float i;
+  while(true) {
+    for(i = 0; i <= 255; i+=2.5) {
+      dmx_buffer[0] = i;
+      dmxsender.send_frame(dmx_buffer);
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    } 
+    // sleep(1);
+    for(i = 255; i >= 0; i-=2.5) {
+      dmx_buffer[0] = i;
+      dmxsender.send_frame(dmx_buffer);
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    } 
+    // sleep(1);
+  }
+}
 
 int main() {
   DMXSender dmxsender(50); // Initialize DMX Sender with 50 channels
 
-  for(int i = 0; i < 20; i++) {
-    std::cout << "Doing lighting things..." << std::endl;
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-  }
+  dmx_fades_test(dmxsender);
 
   dmxsender.stop();
 
