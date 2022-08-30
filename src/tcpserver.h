@@ -1,0 +1,79 @@
+/*
+ * Filename: tcpserver.h
+ * Description: interface for the TcpServer class
+ * Author: Sergio Carmine <me@sergiocarmi.net>
+ * Date of Creation: 30/08/2022
+ */
+
+#pragma once
+
+#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <errno.h>
+#include <thread>
+#include <chrono>
+#include <ctype.h>
+#include <algorithm>
+
+// Network libraries
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#include "lightstates.h"
+
+#define MAX_CLIENTS 5
+#define MAX_CONNECT_QUEUE 5
+#define CLIENT_WELCOME_MESSAGE "Lumize DMX Engine v2.0\n"
+
+/*
+ * Definition of the TcpServer class
+ */
+class TCPServer
+{
+public:
+   // Constructor
+   TCPServer(int port);
+
+   // Methods
+   bool start();
+   void set_light_states(LightStates &light_states);
+
+private:
+   int port,
+       master_socket,
+       addrlen,
+       new_socket,
+       activity,
+       i,
+       valread,
+       sd;
+   int client_socket[MAX_CLIENTS];
+   int max_sd, max_clients = MAX_CLIENTS;
+   struct sockaddr_in address;
+   std::string client_welcome_message = CLIENT_WELCOME_MESSAGE;
+   bool running = true;
+   char buffer[255];
+
+   // Socket description set
+   fd_set readfds;
+
+   std::thread tcp_thread;
+
+   LightStates *light_states;
+
+   // Internal functions
+   void
+   init_client_sockets_array();
+   void main_loop();
+   void add_client_sockets_to_set();
+   void accept_connection();
+   bool send_string(int socketfd, std::string message);
+   bool add_client_to_client_sockets(int socketfd);
+   void handle_action_from_client(int socketfd, int i);
+   void parse_message(std::string message);
+};

@@ -21,10 +21,10 @@ EXECUTABLE = LumizeDmxEngine
 
 
 # Main executable target
-$(EXECUTABLE): $(BUILD)/main.o $(BUILD)/dmxsender.o $(BUILD)/logger.o
+$(EXECUTABLE): $(BUILD)/main.o $(BUILD)/dmxsender.o $(BUILD)/tcpserver.o $(BUILD)/logger.o
 	@ echo "Linking main executable..."
 	@ mkdir -p $(BUILD)
-	@ $(LD) -o LumizeDmxEngine $(PKG_CONFIG) $(BUILD)/main.o $(BUILD)/dmxsender.o $(BUILD)/logger.o
+	@ $(LD) -o LumizeDmxEngine $(PKG_CONFIG) $(BUILD)/main.o $(BUILD)/dmxsender.o $(BUILD)/tcpserver.o $(BUILD)/logger.o
 	@ echo "Build complete!"
 
 $(BUILD)/main.o: $(SRC)/main.cpp
@@ -38,6 +38,12 @@ $(BUILD)/dmxsender.o: $(SRC)/dmxsender.cpp $(SRC)/dmxsender.h
 	@ mkdir -p $(BUILD)
 	@ $(CC) $(CFLAGS) -o $(BUILD)/dmxsender.o $(SRC)/dmxsender.cpp
 	@ echo "Finished compilation for dmxsender.cpp"
+
+$(BUILD)/tcpserver.o: $(SRC)/tcpserver.cpp $(SRC)/tcpserver.h
+	@ echo "Compiling tcpserver.cpp..."
+	@ mkdir -p $(BUILD)
+	@ $(CC) $(CFLAGS) -o $(BUILD)/tcpserver.o $(SRC)/tcpserver.cpp
+	@ echo "Finished compilation for tcpserver.cpp"
 
 $(BUILD)/logger.o: $(SRC)/logger.cpp $(SRC)/logger.h
 	@ echo "Compiling logger.cpp..."
