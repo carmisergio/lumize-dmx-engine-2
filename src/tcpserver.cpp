@@ -259,7 +259,7 @@ void TCPServer::handle_action_from_client(int socketfd, int i)
       message.erase(std::remove_if(message.begin(), message.end(), ::isspace), message.end());
 
       // Parse incoming message
-      parse_message(message);
+      parse_message(message, socketfd);
    }
 }
 
@@ -267,17 +267,22 @@ void TCPServer::handle_action_from_client(int socketfd, int i)
  * Parses incoming message
  * Parameters:
  *  - std::string message: incoming message
+ *  - int requestser_fd: requester socket file description
  */
-void TCPServer::parse_message(std::string message)
+void TCPServer::parse_message(std::string message, int client_fd)
 {
    // Divide message into
    std::vector<std::string> message_split = split_string(message, ',');
+
+   // Check there is a command type provided
+   if (message_split.size() < 1)
+      return;
 
    std::string command = message_split[0];
 
    // Recognize commands
    if (command == "sreq")
-      status_request_message();
+      status_request_message(client_fd);
    else if (command == "off")
       turn_off_message(message_split);
    else if (command == "on")
@@ -306,9 +311,25 @@ std::vector<std::string> TCPServer::split_string(std::string input, char seperat
    return output;
 }
 
-void TCPServer::status_request_message()
+void TCPServer::status_request_message(int client_fd)
 {
    std::cout << "[MESSAGE] Status Request" << std::endl;
+   std::string message;
+
+   // Start with response message type
+   message.append("sres");
+
+   // Append all statuses
+   for (int i = 0; i < 512; i++)
+   {
+      message.append(",");
+      message.append(std::to_string(light_states->outward_state[i]));
+      message.append("-");
+      message.append(std::to_string(light_states->outward_brightness[i]));
+   }
+   message.append("\n");
+
+   send_string(client_fd, message);
 }
 
 void TCPServer::turn_off_message(std::vector<std::string> split_message)

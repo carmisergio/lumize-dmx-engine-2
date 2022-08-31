@@ -78,9 +78,9 @@ private:
    bool send_string(int socketfd, std::string message);
    bool add_client_to_client_sockets(int socketfd);
    void handle_action_from_client(int socketfd, int i);
-   void parse_message(std::string message);
+   void parse_message(std::string message, int client_fd);
    std::vector<std::string> split_string(std::string input, char seperator);
-   void status_request_message();
+   void status_request_message(int client_fd);
    void turn_off_message(std::vector<std::string> split_message);
    void turn_on_message(std::vector<std::string> split_message);
 };

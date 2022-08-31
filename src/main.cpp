@@ -15,6 +15,20 @@
 #include "lightstates.h" // Light statses struct
 
 /*
+ * Sets up the light states struct
+ * Parameters:
+ *  - LightStates &light_states: light states struct
+ */
+void setup_light_states(LightStates &light_states)
+{
+  for (int i = 0; i < 512; i++)
+  {
+    light_states.outward_state[i] = false;
+    light_states.outward_brightness[i] = 255;
+  }
+}
+
+/*
  * Test fades
  */
 void dmx_fades_test(DMXSender &dmxsender)
@@ -42,23 +56,24 @@ void dmx_fades_test(DMXSender &dmxsender)
 
 int main()
 {
+  // Setup light states structs
   LightStates light_states;
+  setup_light_states(light_states);
 
   for (int i = 0; i < 512; i++)
     light_states.test[i] = 0;
 
-  DMXSender dmxsender(50); // Initialize DMX Sender with 50 channels
+  // Initialize DMXSender
+  DMXSender dmxsender(50);
 
-  // dmx_fades_test(dmxsender);
-
+  // Initialize TCPServer
   TCPServer tcpserver(8000);
-
+  // Give TCPServer access to light states struct
   tcpserver.set_light_states(light_states);
-
+  // Start the TCPServer
   tcpserver.start();
 
   unsigned char dmx_buffer[512];
-
   while (true)
   {
     dmx_buffer[0] = light_states.test[0];
@@ -66,6 +81,7 @@ int main()
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
+  // Stop DMXSender
   dmxsender.stop();
 
   return 0;
