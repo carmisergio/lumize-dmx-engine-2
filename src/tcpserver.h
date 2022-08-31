@@ -17,6 +17,8 @@
 #include <chrono>
 #include <ctype.h>
 #include <algorithm>
+#include <vector>
+#include <sstream>
 
 // Network libraries
 #include <sys/types.h>
@@ -42,6 +44,7 @@ public:
    // Methods
    bool start();
    void set_light_states(LightStates &light_states);
+   void send_state_update();
 
 private:
    int port,
@@ -76,4 +79,8 @@ private:
    bool add_client_to_client_sockets(int socketfd);
    void handle_action_from_client(int socketfd, int i);
    void parse_message(std::string message);
+   std::vector<std::string> split_string(std::string input, char seperator);
+   void status_request_message();
+   void turn_off_message(std::vector<std::string> split_message);
+   void turn_on_message(std::vector<std::string> split_message);
 };

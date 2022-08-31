@@ -263,13 +263,198 @@ void TCPServer::handle_action_from_client(int socketfd, int i)
    }
 }
 
+/*
+ * Parses incoming message
+ * Parameters:
+ *  - std::string message: incoming message
+ */
 void TCPServer::parse_message(std::string message)
 {
-   // Check that the message received is of a valid length
-   if (message.length() < 2)
+   // Divide message into
+   std::vector<std::string> message_split = split_string(message, ',');
+
+   std::string command = message_split[0];
+
+   // Recognize commands
+   if (command == "sreq")
+      status_request_message();
+   else if (command == "off")
+      turn_off_message(message_split);
+   else if (command == "on")
+      turn_on_message(message_split);
+   else
+      std::cout << "Unknown message" << std::endl;
+}
+
+/*
+ * Splits a string into a vector of strings based on a separator characters
+ * Parameters:
+ *  - std::string input: input string
+ *  - char separator: separator characters
+ * Returns: std:vector<std::string> output vector
+ */
+std::vector<std::string> TCPServer::split_string(std::string input, char seperator)
+{
+   std::string section;
+   std::stringstream stream(input);
+   std::vector<std::string> output;
+
+   // Get separated parts from string stream
+   while (std::getline(stream, section, seperator))
+      output.push_back(section);
+
+   return output;
+}
+
+void TCPServer::status_request_message()
+{
+   std::cout << "[MESSAGE] Status Request" << std::endl;
+}
+
+void TCPServer::turn_off_message(std::vector<std::string> split_message)
+{
+   bool has_transition = false;
+   int channel, transition;
+
+   // Check if there are is at least space for the required fields
+   if (split_message.size() < 2)
+   {
+      std::cout << "Malformed off message" << std::endl;
       return;
+   }
 
-   std::string message_type = message.substr(0, 2);
+   // Convert channel number string to int
+   try
+   {
+      channel = std::stoi(split_message[1]);
+   }
+   catch (const std::exception &e)
+   {
+      std::cout << "Malformed channel number" << std::endl;
+      return;
+   }
 
-   std::cout << message_type << std::endl;
+   // Parse parameters
+   for (long unsigned int i = 2; i < split_message.size(); i++)
+   {
+      // Check that the parameter isn't empty
+      if (split_message[i].length() < 1)
+         continue;
+
+      // Parameter is transition
+      if (split_message[i].at(0) == 't')
+      {
+         if (!has_transition)
+         {
+            // Check and store transition
+            try
+            {
+               transition = std::stoi(split_message[i].substr(1));
+            }
+            catch (const std::exception &e)
+            {
+               std::cout << "Bad transition" << std::endl;
+               continue;
+            }
+            has_transition = true;
+         }
+      }
+   }
+
+   // Actually act on the light status arrays
+   if (has_transition)
+      std::cout << "[MESSAGE] OFF Command, channel: " << channel << ", transition: " << transition << "ms" << std::endl;
+   else
+      std::cout << "[MESSAGE] OFF Command, channel: " << channel << std::endl;
+
+   light_states->test[channel] = 0;
+}
+
+void TCPServer::turn_on_message(std::vector<std::string> split_message)
+{
+   bool has_transition = false, has_brightness = false;
+   int channel, transition, brightness;
+
+   // Check if there are is at least space for the required fields
+   if (split_message.size() < 2)
+   {
+      std::cout << "Malformed on message" << std::endl;
+      return;
+   }
+
+   // Convert channel number string to int
+   try
+   {
+      channel = std::stoi(split_message[1]);
+   }
+   catch (const std::exception &e)
+   {
+      std::cout << "Malformed channel number" << std::endl;
+      return;
+   }
+
+   // Parse parameters
+   for (long unsigned int i = 2; i < split_message.size(); i++)
+   {
+      // Check that the parameter isn't empty
+      if (split_message[i].length() < 1)
+         continue;
+
+      // Parameter is brightness
+      if (split_message[i].at(0) == 'b')
+      {
+         if (!has_brightness)
+         {
+            // Check and store brightness
+            try
+            {
+               brightness = std::stoi(split_message[i].substr(1));
+            }
+            catch (const std::exception &e)
+            {
+               std::cout << "Bad brightness" << std::endl;
+               continue;
+            }
+            has_brightness = true;
+         }
+      }
+
+      // Parameter is transition
+      else if (split_message[i].at(0) == 't')
+      {
+         if (!has_transition)
+         {
+            // Check and store transition
+            try
+            {
+               transition = std::stoi(split_message[i].substr(1));
+            }
+            catch (const std::exception &e)
+            {
+               std::cout << "Bad transition" << std::endl;
+               continue;
+            }
+            has_transition = true;
+         }
+      }
+   }
+
+   // Actually act on the light status arrays
+   if (has_brightness)
+   {
+      if (has_transition)
+         std::cout << "[MESSAGE] ON Command, channel: " << channel << ", brightness: " << brightness << ", transition: " << transition << "ms" << std::endl;
+      else
+         std::cout << "[MESSAGE] ON Command, channel: " << channel << ", brightness: " << brightness << std::endl;
+
+      light_states->test[channel] = brightness;
+   }
+   else
+   {
+      if (has_transition)
+         std::cout << "[MESSAGE] ON Command, channel: " << channel << ", transition: " << transition << "ms" << std::endl;
+      else
+         std::cout << "[MESSAGE] ON Command, channel: " << channel << std::endl;
+      light_states->test[channel] = 255;
+   }
 }
