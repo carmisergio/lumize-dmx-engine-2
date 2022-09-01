@@ -9,9 +9,15 @@
 #pragma once
 
 #include <iostream>
+#include <thread>
+#include <chrono>
+#include <cmath>
+#include <mutex>
 
 // DMX output
 #include "dmxsender.h"
+
+#include "lightstates.h"
 
 // logger helper
 #include "logger.h"
@@ -28,25 +34,24 @@ public:
    LightRenderer();
 
    // Methods
-   void send_frame(unsigned char *dmx_frame);
+   bool start();
    void stop();
+   void set_light_states(LightStates &light_states, std::timed_mutex &light_states_lock);
 
 private:
-   int channels;                          // Number of channels to output
-   struct ftdi_context *ftdi;             // libFTDI FTDI context
-   bool running = true;                   // Used to disconnect gracefully
-   bool can_send = false;                 // Bool representing current connection
-                                          // status to the FTDI chip
-   std::thread connection_manager_thread; // Reference to the connection manager thread
-   std::mutex manager_mutex;              // Mutex to be used with the condition variable
-   std::condition_variable manager_cv;    // Condition variable to stop
-                                          // the connection manager from waiting
-   const unsigned char start_code = 0;
+   DMXSender dmx_sender;
+   LightStates *light_states;
+   std::timed_mutex *light_states_lock;
+   unsigned char dmx_frame[512]; // DMX frame to be sent
+   bool running = true;
+   std::thread rendering_thread;
+   int total_wait;
+   std::chrono::steady_clock::time_point render_begin_time, render_end_time;
+   int wait_time;
+
    // Internal functions
-   bool open_ftdi();
-   bool close_ftdi();
-   bool setup_serial_options();
-   bool reconnect();
-   bool check_ftdi_connection();
-   void manage_connection();
+   void main_loop();
+
+   // Easing functions
+   double ease_in_out_sine(double t);
 };

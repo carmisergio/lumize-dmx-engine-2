@@ -16,4 +16,13 @@ struct LightStates
    // Outward-facing states
    bool outward_state[512];
    int outward_brightness[512];
+
+   // Current brightness
+   int current_brightness[512];
+
+   // Fade states
+   double fade_progress[512];
+   double fade_delta[512];
+   int fade_start[512];
+   int fade_end[512];
 };

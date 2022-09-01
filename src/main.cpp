@@ -9,9 +9,11 @@
 #include <unistd.h>
 #include <thread>
 #include <chrono>
+#include <mutex>
 
-#include "dmxsender.h"   // DMXSender class
-#include "tcpserver.h"   // TCPServer class
+#include "tcpserver.h" // TCPServer class
+#include "lightrenderer.h"
+#include "dmxsender.h"
 #include "lightstates.h" // Light statses struct
 #include "logger.h"      // Logger class
 
@@ -26,73 +28,49 @@ void setup_light_states(LightStates &light_states)
   {
     light_states.outward_state[i] = false;
     light_states.outward_brightness[i] = 255;
-  }
-}
-
-/*
- * Test fades
- */
-void dmx_fades_test(DMXSender &dmxsender)
-{
-  unsigned char dmx_buffer[512];
-  float i;
-  while (true)
-  {
-    for (i = 0; i <= 255; i += 2.5)
-    {
-      dmx_buffer[0] = i;
-      dmxsender.send_frame(dmx_buffer);
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
-    // sleep(1);
-    for (i = 255; i >= 0; i -= 2.5)
-    {
-      dmx_buffer[0] = i;
-      dmxsender.send_frame(dmx_buffer);
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
-    // sleep(1);
+    light_states.fade_delta[i] = 0;
+    light_states.fade_progress[i] = 0;
+    light_states.fade_start[i] = 0;
+    light_states.fade_end[i] = 0;
   }
 }
 
 int main()
 {
-  DMXSender dmxsender(50);
-  TCPServer tcpserver(8000);
+  TCPServer tcp_server(8000);
+  LightRenderer light_renderer;
 
   // Setup light states structs
   LightStates light_states;
   setup_light_states(light_states);
+  std::timed_mutex light_states_lock;
 
-  for (int i = 0; i < 512; i++)
-    light_states.test[i] = 0;
+  // Give TCPServer and LightRenderer access to light states struct
+  tcp_server.set_light_states(light_states, light_states_lock);
+  light_renderer.set_light_states(light_states, light_states_lock);
 
-  // Start the dmxsender
-  if (!dmxsender.start())
-    return 1;
-
-  // Give TCPServer access to light states struct
-  tcpserver.set_light_states(light_states);
-  // Start the TCPServer
-  if (!tcpserver.start())
+  // Start LightRenderer
+  if (!light_renderer.start())
   {
-    dmxsender.stop();
+    return 1;
+  }
+  // Start the TCPServer
+  if (!tcp_server.start())
+  {
+    light_renderer.stop();
     return 2;
   }
 
-  unsigned char dmx_buffer[512];
   while (true)
   {
-    dmx_buffer[0] = light_states.test[0];
-    dmxsender.send_frame(dmx_buffer);
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    continue;
   }
 
   // Stop TCPServer
-  tcpserver.stop();
+  tcp_server.stop();
 
   // Stop DMXSender
-  dmxsender.stop();
+  light_renderer.stop();
 
   return 0;
 }

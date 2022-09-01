@@ -94,9 +94,10 @@ void TCPServer::stop()
  * Parameters:
  *  - LightStates &light_states: reference to light states struct
  */
-void TCPServer::set_light_states(LightStates &light_states)
+void TCPServer::set_light_states(LightStates &light_states, std::timed_mutex &light_states_lock)
 {
    this->light_states = &light_states;
+   this->light_states_lock = &light_states_lock;
 }
 
 /*
@@ -386,7 +387,7 @@ void TCPServer::turn_off_message(std::vector<std::string> split_message)
       channel = std::stoi(split_message[1]);
 
       // Check that channel value is acceptable
-      if (channel < 0 || channel > 512)
+      if (channel < 0 || channel > 511)
       {
          std::cout << "Invalid channel" << std::endl;
          return;
@@ -463,7 +464,7 @@ void TCPServer::turn_on_message(std::vector<std::string> split_message)
       channel = std::stoi(split_message[1]);
 
       // Check that channel value is acceptable
-      if (channel < 0 || channel > 512)
+      if (channel < 0 || channel > 511)
       {
          std::cout << "Invalid channel" << std::endl;
          return;
@@ -552,4 +553,9 @@ void TCPServer::turn_on_message(std::vector<std::string> split_message)
          std::cout << "[MESSAGE] ON Command, channel: " << channel << std::endl;
       light_states->test[channel] = 255;
    }
+
+   light_states->fade_start[0] = 0;
+   light_states->fade_end[0] = 255;
+   light_states->fade_progress[0] = 0;
+   light_states->fade_delta[0] = 0.02;
 }

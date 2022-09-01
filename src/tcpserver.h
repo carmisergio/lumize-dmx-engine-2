@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <vector>
 #include <sstream>
+#include <mutex>
 
 // Network libraries
 #include <sys/types.h>
@@ -46,7 +47,7 @@ public:
    // Methods
    bool start();
    void stop();
-   void set_light_states(LightStates &light_states);
+   void set_light_states(LightStates &light_states, std::timed_mutex &light_states_lock);
    void send_state_update();
 
 private:
@@ -71,10 +72,10 @@ private:
    std::thread tcp_thread;
 
    LightStates *light_states;
+   std::timed_mutex *light_states_lock;
 
    // Internal functions
-   void
-   init_client_sockets_array();
+   void init_client_sockets_array();
    void main_loop();
    void add_client_sockets_to_set();
    void accept_connection();
