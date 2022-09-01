@@ -30,10 +30,12 @@ bool TCPServer::start()
 {
    int opt = 1;
 
+   logger("[TCP] Starting server...", LOG_INFO, true);
+
    // Create master socket
    if ((master_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1)
    {
-      std::cout << "Error on socket()" << std::endl;
+      logger("[TCP] Error on socket() system call!", LOG_ERR, false);
       return false;
    }
 
@@ -41,7 +43,7 @@ bool TCPServer::start()
    if (setsockopt(master_socket, SOL_SOCKET, SO_REUSEADDR,
                   (char *)&opt, sizeof(opt)) < 0)
    {
-      std::cout << "Error on setsockopt()" << std::endl;
+      logger("[TCP] Error setting socket options!", LOG_ERR, false);
       return false;
    }
 
@@ -54,14 +56,14 @@ bool TCPServer::start()
    if (bind(master_socket, (struct sockaddr *)&address,
             sizeof(address)) < 0)
    {
-      std::cout << "Error on bind()" << std::endl;
+      logger("[TCP] Error binding port to socket!", LOG_ERR, false);
       return false;
    }
 
    // Start listening for connections
    if (listen(master_socket, MAX_CONNECT_QUEUE) < 0)
    {
-      std::cout << "Error on listen()" << std::endl;
+      logger("[TCP] Error starting listen()!", LOG_ERR, false);
       return false;
    }
 
@@ -71,6 +73,7 @@ bool TCPServer::start()
    // Start handling connections and messages
    tcp_thread = std::thread(&TCPServer::main_loop, this);
 
+   logger("[TCP] Listening on port " + std::to_string(port), LOG_SUCC, false);
    return true;
 }
 
@@ -114,8 +117,6 @@ void TCPServer::init_client_sockets_array()
  */
 void TCPServer::main_loop()
 {
-   std::cout << "In the main loop!" << std::endl;
-
    while (running)
    {
       // Clear socket set
@@ -134,7 +135,7 @@ void TCPServer::main_loop()
       // Check for error on select()
       if (activity < 0 && errno != EINTR)
       {
-         std::cout << "Error on select()" << std::endl;
+         logger("[TCP] Error on select()", LOG_WARN, true);
          continue;
       }
 
@@ -186,14 +187,12 @@ void TCPServer::accept_connection()
 {
    if ((new_socket = accept(master_socket, (struct sockaddr *)&address, (socklen_t *)&addrlen)) < 0)
    {
-      std::cout << "Failure accepting client" << std::endl;
+      logger("[TCP] Error accepting client", LOG_WARN, true);
       return;
    }
 
-   std::cout << "New connection from " << inet_ntoa(address.sin_addr) << std::endl;
-
-   // Send welcome message
-   send_string(new_socket, client_welcome_message);
+   std::string address_string(inet_ntoa(address.sin_addr));
+   logger("[TCP] New connection from " + address_string, LOG_INFO, true);
 
    // Add socket to array of client sockets
    if (!add_client_to_client_sockets(new_socket))
@@ -202,8 +201,15 @@ void TCPServer::accept_connection()
       // close the connection
       close(new_socket);
 
-      std::cout << "Client rejected: too many clients" << std::endl;
+      logger("[TCP] Client " + address_string + " rejected: too many clients", LOG_WARN, true);
+
+      return;
    }
+
+   logger("[TCP] Client " + address_string + " accepted!", LOG_SUCC, true);
+
+   // Send welcome message
+   send_string(new_socket, client_welcome_message);
 }
 
 /*
@@ -254,14 +260,17 @@ bool TCPServer::add_client_to_client_sockets(int socketfd)
  */
 void TCPServer::handle_action_from_client(int socketfd, int i)
 {
-   if ((valread = read(sd, buffer, 255)) == 0)
+   if ((valread = read(socketfd, buffer, 255)) == 0)
    {
       // Client has disconnected
 
-      std::cout << "Client disconnected" << std::endl;
+      // Get info of disconnected client
+      getpeername(socketfd, (struct sockaddr *)&address, (socklen_t *)&addrlen);
+      std::string address_string(inet_ntoa(address.sin_addr));
+      logger("[TCP] Client " + address_string + " disconnected", LOG_INFO, true);
 
       // Close connection
-      close(sd);
+      close(socketfd);
 
       // Free up spot in client sockets array
       client_socket[i] = 0;
@@ -305,7 +314,7 @@ void TCPServer::parse_message(std::string message, int client_fd)
    else if (command == "on")
       turn_on_message(message_split);
    else
-      std::cout << "Unknown message" << std::endl;
+      logger("[TCP] Received: Unknown message type", LOG_WARN, true);
 }
 
 /*
@@ -335,7 +344,7 @@ std::vector<std::string> TCPServer::split_string(std::string input, char seperat
  */
 void TCPServer::status_request_message(int client_fd)
 {
-   std::cout << "[MESSAGE] Status Request" << std::endl;
+   logger("[TCP] Received: Status request message", LOG_INFO, true);
    std::string message;
 
    // Start with response message type

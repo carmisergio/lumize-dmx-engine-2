@@ -13,6 +13,7 @@
 #include "dmxsender.h"   // DMXSender class
 #include "tcpserver.h"   // TCPServer class
 #include "lightstates.h" // Light statses struct
+#include "logger.h"      // Logger class
 
 /*
  * Sets up the light states struct
@@ -56,6 +57,9 @@ void dmx_fades_test(DMXSender &dmxsender)
 
 int main()
 {
+  DMXSender dmxsender(50);
+  TCPServer tcpserver(8000);
+
   // Setup light states structs
   LightStates light_states;
   setup_light_states(light_states);
@@ -63,15 +67,18 @@ int main()
   for (int i = 0; i < 512; i++)
     light_states.test[i] = 0;
 
-  // Initialize DMXSender
-  DMXSender dmxsender(50);
+  // Start the dmxsender
+  if (!dmxsender.start())
+    return 1;
 
-  // Initialize TCPServer
-  TCPServer tcpserver(8000);
   // Give TCPServer access to light states struct
   tcpserver.set_light_states(light_states);
   // Start the TCPServer
-  tcpserver.start();
+  if (!tcpserver.start())
+  {
+    dmxsender.stop();
+    return 2;
+  }
 
   unsigned char dmx_buffer[512];
   while (true)

@@ -27,7 +27,9 @@
 #include <arpa/inet.h>
 
 #include "lightstates.h"
+#include "logger.h"
 
+#define DEFAULT_PORT 3141
 #define MAX_CLIENTS 5
 #define MAX_CONNECT_QUEUE 5
 #define CLIENT_WELCOME_MESSAGE "Lumize DMX Engine v2.0\n"
@@ -39,7 +41,7 @@ class TCPServer
 {
 public:
    // Constructor
-   TCPServer(int port);
+   TCPServer(int port = DEFAULT_PORT);
 
    // Methods
    bool start();
