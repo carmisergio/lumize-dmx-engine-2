@@ -74,6 +74,23 @@ bool TCPServer::start()
    return true;
 }
 
+/*
+ * Stop execution of TCPServer
+ */
+void TCPServer::stop()
+{
+   // Stop listener thread
+   running = false;
+
+   // Wait for listener thread to stop
+   tcp_thread.join();
+}
+
+/*
+ * Give TCPServer access to LightStates struct
+ * Parameters:
+ *  - LightStates &light_states: reference to light states struct
+ */
 void TCPServer::set_light_states(LightStates &light_states)
 {
    this->light_states = &light_states;
@@ -311,6 +328,11 @@ std::vector<std::string> TCPServer::split_string(std::string input, char seperat
    return output;
 }
 
+/*
+ * Handles a status request message from the client and sends correct response
+ * parameters:
+ *  - int client_fd: client socket file descriptor
+ */
 void TCPServer::status_request_message(int client_fd)
 {
    std::cout << "[MESSAGE] Status Request" << std::endl;
@@ -332,6 +354,11 @@ void TCPServer::status_request_message(int client_fd)
    send_string(client_fd, message);
 }
 
+/*
+ * Handles a turn off message from the client
+ * parameters:
+ *  - std::vector<std::string> split_message: complete message to get parameters
+ */
 void TCPServer::turn_off_message(std::vector<std::string> split_message)
 {
    bool has_transition = false;
@@ -348,10 +375,17 @@ void TCPServer::turn_off_message(std::vector<std::string> split_message)
    try
    {
       channel = std::stoi(split_message[1]);
+
+      // Check that channel value is acceptable
+      if (channel < 0 || channel > 512)
+      {
+         std::cout << "Invalid channel" << std::endl;
+         return;
+      }
    }
    catch (const std::exception &e)
    {
-      std::cout << "Malformed channel number" << std::endl;
+      std::cout << "Invalid channel number" << std::endl;
       return;
    }
 
@@ -371,6 +405,12 @@ void TCPServer::turn_off_message(std::vector<std::string> split_message)
             try
             {
                transition = std::stoi(split_message[i].substr(1));
+               // Check that transition value is acceptable
+               if (transition < 0)
+               {
+                  std::cout << "Invalid transition" << std::endl;
+                  continue;
+               }
             }
             catch (const std::exception &e)
             {
@@ -391,6 +431,11 @@ void TCPServer::turn_off_message(std::vector<std::string> split_message)
    light_states->test[channel] = 0;
 }
 
+/*
+ * Handles a turn on message from the client
+ * parameters:
+ *  - std::vector<std::string> split_message: complete message to get parameters
+ */
 void TCPServer::turn_on_message(std::vector<std::string> split_message)
 {
    bool has_transition = false, has_brightness = false;
@@ -407,6 +452,13 @@ void TCPServer::turn_on_message(std::vector<std::string> split_message)
    try
    {
       channel = std::stoi(split_message[1]);
+
+      // Check that channel value is acceptable
+      if (channel < 0 || channel > 512)
+      {
+         std::cout << "Invalid channel" << std::endl;
+         return;
+      }
    }
    catch (const std::exception &e)
    {
@@ -430,6 +482,13 @@ void TCPServer::turn_on_message(std::vector<std::string> split_message)
             try
             {
                brightness = std::stoi(split_message[i].substr(1));
+
+               // Check that brightness value is acceptable
+               if (brightness < 0 || brightness > 255)
+               {
+                  std::cout << "Invalid brightness" << std::endl;
+                  continue;
+               }
             }
             catch (const std::exception &e)
             {
@@ -449,6 +508,12 @@ void TCPServer::turn_on_message(std::vector<std::string> split_message)
             try
             {
                transition = std::stoi(split_message[i].substr(1));
+               // Check that transition value is acceptable
+               if (transition < 0)
+               {
+                  std::cout << "Invalid transition" << std::endl;
+                  continue;
+               }
             }
             catch (const std::exception &e)
             {

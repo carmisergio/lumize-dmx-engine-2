@@ -43,6 +43,7 @@ public:
 
    // Methods
    bool start();
+   void stop();
    void set_light_states(LightStates &light_states);
    void send_state_update();
 

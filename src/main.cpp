@@ -81,6 +81,9 @@ int main()
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
+  // Stop TCPServer
+  tcpserver.stop();
+
   // Stop DMXSender
   dmxsender.stop();
 
