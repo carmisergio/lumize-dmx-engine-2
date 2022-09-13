@@ -7,6 +7,9 @@
 
 #include "tcpserver.h" // Include definition of class to be implemented
 
+#define FPS 100
+#define DEFAULT_TRANSITION 1000 // (ms)
+
 /*
  *********** CONSTRUCTOR **********
  */
@@ -377,7 +380,7 @@ void TCPServer::turn_off_message(std::vector<std::string> split_message)
    // Check if there are is at least space for the required fields
    if (split_message.size() < 2)
    {
-      std::cout << "Malformed off message" << std::endl;
+      logger("[TCP] OFF Command, no channel given!", LOG_WARN, true);
       return;
    }
 
@@ -389,13 +392,14 @@ void TCPServer::turn_off_message(std::vector<std::string> split_message)
       // Check that channel value is acceptable
       if (channel < 0 || channel > 511)
       {
-         std::cout << "Invalid channel" << std::endl;
+         logger("[TCP] OFF Command, channel number out of range!", LOG_WARN, true);
          return;
       }
    }
    catch (const std::exception &e)
    {
-      std::cout << "Invalid channel number" << std::endl;
+      logger("[TCP] OFF Command, bad channel!", LOG_WARN, true);
+      return;
       return;
    }
 
@@ -418,14 +422,14 @@ void TCPServer::turn_off_message(std::vector<std::string> split_message)
                // Check that transition value is acceptable
                if (transition < 0)
                {
-                  std::cout << "Invalid transition" << std::endl;
-                  continue;
+                  logger("[TCP] OFF Command, transition value out of range!", LOG_WARN, true);
+                  return;
                }
             }
             catch (const std::exception &e)
             {
-               std::cout << "Bad transition" << std::endl;
-               continue;
+               logger("[TCP] OFF Command, bad transition!", LOG_WARN, true);
+               return;
             }
             has_transition = true;
          }
@@ -434,11 +438,12 @@ void TCPServer::turn_off_message(std::vector<std::string> split_message)
 
    // Actually act on the light status arrays
    if (has_transition)
-      std::cout << "[MESSAGE] OFF Command, channel: " << channel << ", transition: " << transition << "ms" << std::endl;
+      logger("[TCP] OFF Command, channel: " + std::to_string(channel) + ", transition: " + std::to_string(transition) + "ms", LOG_INFO, true);
    else
-      std::cout << "[MESSAGE] OFF Command, channel: " << channel << std::endl;
+      logger("[TCP] OFF Command, channel: " + std::to_string(channel), LOG_INFO, true);
 
-   light_states->test[channel] = 0;
+   // Perform turn off fade
+   start_off_fade(channel, has_transition, transition);
 }
 
 /*
@@ -454,7 +459,7 @@ void TCPServer::turn_on_message(std::vector<std::string> split_message)
    // Check if there are is at least space for the required fields
    if (split_message.size() < 2)
    {
-      std::cout << "Malformed on message" << std::endl;
+      logger("[TCP] ON Command, no channel given!", LOG_WARN, true);
       return;
    }
 
@@ -466,13 +471,13 @@ void TCPServer::turn_on_message(std::vector<std::string> split_message)
       // Check that channel value is acceptable
       if (channel < 0 || channel > 511)
       {
-         std::cout << "Invalid channel" << std::endl;
+         logger("[TCP] ON Command, channel number out of range!", LOG_WARN, true);
          return;
       }
    }
    catch (const std::exception &e)
    {
-      std::cout << "Malformed channel number" << std::endl;
+      logger("[TCP] ON Command, bad channel!", LOG_WARN, true);
       return;
    }
 
@@ -496,14 +501,14 @@ void TCPServer::turn_on_message(std::vector<std::string> split_message)
                // Check that brightness value is acceptable
                if (brightness < 0 || brightness > 255)
                {
-                  std::cout << "Invalid brightness" << std::endl;
-                  continue;
+                  logger("[TCP] ON Command, brightness value out of range!", LOG_WARN, true);
+                  return;
                }
             }
             catch (const std::exception &e)
             {
-               std::cout << "Bad brightness" << std::endl;
-               continue;
+               logger("[TCP] ON Command, bad brightness!", LOG_WARN, true);
+               return;
             }
             has_brightness = true;
          }
@@ -521,41 +526,87 @@ void TCPServer::turn_on_message(std::vector<std::string> split_message)
                // Check that transition value is acceptable
                if (transition < 0)
                {
-                  std::cout << "Invalid transition" << std::endl;
-                  continue;
+                  logger("[TCP] ON Command, transition value out of range!", LOG_WARN, true);
+                  return;
                }
             }
             catch (const std::exception &e)
             {
-               std::cout << "Bad transition" << std::endl;
-               continue;
+               logger("[TCP] ON Command, bad transition!", LOG_WARN, true);
+               return;
             }
             has_transition = true;
          }
       }
    }
 
-   // Actually act on the light status arrays
    if (has_brightness)
    {
       if (has_transition)
-         std::cout << "[MESSAGE] ON Command, channel: " << channel << ", brightness: " << brightness << ", transition: " << transition << "ms" << std::endl;
+         logger("[TCP] ON Command, channel: " + std::to_string(channel) + ", brightness: " + std::to_string(brightness) + ", transition: " + std::to_string(transition) + "ms", LOG_INFO, true);
       else
-         std::cout << "[MESSAGE] ON Command, channel: " << channel << ", brightness: " << brightness << std::endl;
-
-      light_states->test[channel] = brightness;
+         logger("[TCP] ON Command, channel: " + std::to_string(channel) + ", brightness: " + std::to_string(brightness), LOG_INFO, true);
    }
    else
    {
       if (has_transition)
-         std::cout << "[MESSAGE] ON Command, channel: " << channel << ", transition: " << transition << "ms" << std::endl;
+         logger("[TCP] ON Command, channel: " + std::to_string(channel) + ", transition: " + std::to_string(transition) + "ms", LOG_INFO, true);
       else
-         std::cout << "[MESSAGE] ON Command, channel: " << channel << std::endl;
-      light_states->test[channel] = 255;
+         logger("[TCP] ON Command, channel: " + std::to_string(channel), LOG_INFO, true);
    }
 
-   light_states->fade_start[0] = 0;
-   light_states->fade_end[0] = 255;
-   light_states->fade_progress[0] = 0;
-   light_states->fade_delta[0] = 0.02;
+   start_on_fade(channel, has_brightness, has_transition, brightness, transition);
+}
+
+void TCPServer::start_on_fade(int channel, bool has_brightness, bool has_transition, int brightness, int transition)
+{
+   // Acquire lock on light states
+   light_states_lock->lock();
+
+   // If brightness was not provided in the message, turn on to previous known brightness
+   if (!has_brightness)
+      brightness = light_states->outward_brightness[channel];
+
+   // If transition was not provided, use default transition
+   if (!has_transition)
+      transition = DEFAULT_TRANSITION;
+
+   // Set fade variables
+   light_states->fade_progress[channel] = 0;
+   light_states->fade_delta[channel] = 1000.0 / (FPS * transition);   // 1 / FPS * transition if transition was in seconds
+   light_states->fade_start[channel] = light_states->fade_current[0]; // Start where last fade ended
+   light_states->fade_end[channel] = brightness;
+
+   // Set outward facing states
+   light_states->outward_state[channel] = true;
+   light_states->outward_brightness[channel] = brightness;
+
+   // Free lock
+   light_states_lock->unlock();
+
+   logger("[LIGHT] Starting fade, channel: " + std::to_string(channel) + ", start: " + std::to_string(light_states->fade_start[channel]) + ", end: " + std::to_string(light_states->fade_end[channel]) + ", delta: " + std::to_string(light_states->fade_delta[channel]), LOG_INFO, true);
+}
+
+void TCPServer::start_off_fade(int channel, bool has_transition, int transition)
+{
+   // Acquire lock on light states
+   light_states_lock->lock();
+
+   // If transition was not provided, use default transition
+   if (!has_transition)
+      transition = DEFAULT_TRANSITION;
+
+   // Set transition variables
+   light_states->fade_progress[channel] = 0;
+   light_states->fade_delta[channel] = 1000.0 / (FPS * transition);   // 1 / FPS * transition if transition was in seconds
+   light_states->fade_start[channel] = light_states->fade_current[0]; // Start where last fade ended
+   light_states->fade_end[channel] = 0;
+
+   // Set outward facing states
+   light_states->outward_state[channel] = false;
+
+   // Free lock
+   light_states_lock->unlock();
+
+   logger("[LIGHT] Starting fade, channel: " + std::to_string(channel) + ", start: " + std::to_string(light_states->fade_start[channel]) + ", end: " + std::to_string(light_states->fade_end[channel]) + ", delta: " + std::to_string(light_states->fade_delta[channel]), LOG_INFO, true);
 }

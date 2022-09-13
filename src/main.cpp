@@ -32,6 +32,7 @@ void setup_light_states(LightStates &light_states)
     light_states.fade_progress[i] = 0;
     light_states.fade_start[i] = 0;
     light_states.fade_end[i] = 0;
+    light_states.fade_current[i] = 0;
   }
 }
 
@@ -54,6 +55,7 @@ int main()
   {
     return 1;
   }
+
   // Start the TCPServer
   if (!tcp_server.start())
   {
@@ -61,9 +63,10 @@ int main()
     return 2;
   }
 
+  // Keep program running
   while (true)
   {
-    continue;
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
 
   // Stop TCPServer

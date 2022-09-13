@@ -75,8 +75,6 @@ void LightRenderer::main_loop()
       // Get render start time
       render_begin_time = std::chrono::steady_clock::now();
 
-      // std::cout << light_states->fade_progress[0] << std::endl;
-
       // Acquire lock on light states
       if (light_states_lock->try_lock_for(std::chrono::milliseconds(5)))
       {
@@ -84,10 +82,10 @@ void LightRenderer::main_loop()
          for (int i = 0; i < 512; i++)
          {
             if (light_states->fade_delta[i] == 0)
-               dmx_frame[i] = light_states->fade_end[i];
+               dmx_frame[i] = light_states->fade_current[i];
             else
             {
-               dmx_frame[i] = (double)(light_states->fade_end[i] - light_states->fade_start[i]) * ease_in_out_sine(light_states->fade_progress[i]) + light_states->fade_start[i];
+               // Increment fade progress
                light_states->fade_progress[i] += light_states->fade_delta[i];
 
                // If fade is finished
@@ -95,6 +93,13 @@ void LightRenderer::main_loop()
                {
                   light_states->fade_delta[i] = 0;
                   light_states->fade_progress[i] = 0;
+                  light_states->fade_current[i] = light_states->fade_end[i];
+               }
+               else
+               {
+                  // Compute light value
+                  light_states->fade_current[i] = (double)(light_states->fade_end[i] - light_states->fade_start[i]) * ease_in_out_sine(light_states->fade_progress[i]) + light_states->fade_start[i];
+                  dmx_frame[i] = light_states->fade_current[i];
                }
             }
          }
@@ -103,15 +108,13 @@ void LightRenderer::main_loop()
       // Free lock
       light_states_lock->unlock();
 
-      std::cout << (int)dmx_frame[0] << std::endl;
-
       // Send dmx frame
       dmx_sender.send_frame(dmx_frame);
 
       // Get render end time
       render_end_time = std::chrono::steady_clock::now();
       wait_time = total_wait - std::chrono::duration_cast<std::chrono::milliseconds>(render_end_time - render_begin_time).count();
-      // std::cout << wait_time << std::endl;
+
       // Wait correct amount of time
       std::this_thread::sleep_for(std::chrono::milliseconds(wait_time));
    }

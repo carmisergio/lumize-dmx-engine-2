@@ -87,4 +87,6 @@ private:
    void status_request_message(int client_fd);
    void turn_off_message(std::vector<std::string> split_message);
    void turn_on_message(std::vector<std::string> split_message);
+   void start_on_fade(int channel, bool has_brightness, bool has_transition, int brightness, int transition);
+   void start_off_fade(int channel, bool has_transition, int transition);
 };
