@@ -7,17 +7,6 @@
 
 #include "lightrenderer.h" // Include definition of class to be implemented
 
-#define DEFAULT_TRANSITION 1000
-#define FPS 100
-
-/*
- *********** CONSTRUCTOR **********
- */
-LightRenderer::LightRenderer() : dmx_sender(50)
-{
-   total_wait = 1000 / FPS;
-}
-
 /*
  ********** PUBLIC FUNCTIONS **********
  */
@@ -65,11 +54,29 @@ void LightRenderer::set_light_states(LightStates &light_states, std::timed_mutex
 }
 
 /*
+ * Configure the light renderer
+ * Parameters:
+ *  - int fps: FPS to render at
+ *  - int channels: Amount of channels to output
+ */
+void LightRenderer::configure(int fps, int channels)
+{
+   this->fps = fps;
+   this->channels = channels;
+
+   // Configure DMXSender
+   dmx_sender.configure(channels);
+}
+
+/*
  ********** PRIVATE FUNCTIONS **********
  */
 
 void LightRenderer::main_loop()
 {
+   // Calculate total wait time between each frame
+   total_wait = 1000 / fps;
+
    while (running)
    {
       // Get render start time
@@ -103,6 +110,8 @@ void LightRenderer::main_loop()
                }
             }
          }
+
+         // std::cout << (int)dmx_frame[0] << std::endl;
       };
 
       // Free lock

@@ -7,17 +7,11 @@
 
 #include "tcpserver.h" // Include definition of class to be implemented
 
-#define FPS 100
-#define DEFAULT_TRANSITION 1000 // (ms)
-
 /*
  *********** CONSTRUCTOR **********
  */
-TCPServer::TCPServer(int port)
+TCPServer::TCPServer()
 {
-   // Set port
-   this->port = port;
-
    init_client_sockets_array();
 }
 
@@ -101,6 +95,21 @@ void TCPServer::set_light_states(LightStates &light_states, std::timed_mutex &li
 {
    this->light_states = &light_states;
    this->light_states_lock = &light_states_lock;
+}
+
+/*
+ * Give TCPServer all its configuration parameters
+ * Parameters:
+ *  - int port: TCP port to bind to
+ *  - int fps: Rendering FPS to calculate fade deltas
+ *  - int default_transition: Default transition value to apply to fades
+ *    without transition specified
+ */
+void TCPServer::configure(int port, int fps, int default_transition)
+{
+   this->port = port;
+   this->fps = fps;
+   this->default_transition = default_transition;
 }
 
 /*
@@ -569,11 +578,11 @@ void TCPServer::start_on_fade(int channel, bool has_brightness, bool has_transit
 
    // If transition was not provided, use default transition
    if (!has_transition)
-      transition = DEFAULT_TRANSITION;
+      transition = default_transition;
 
    // Set fade variables
    light_states->fade_progress[channel] = 0;
-   light_states->fade_delta[channel] = 1000.0 / (FPS * transition);   // 1 / FPS * transition if transition was in seconds
+   light_states->fade_delta[channel] = 1000.0 / (fps * transition);   // 1 / FPS * transition if transition was in seconds
    light_states->fade_start[channel] = light_states->fade_current[0]; // Start where last fade ended
    light_states->fade_end[channel] = brightness;
 
@@ -594,11 +603,11 @@ void TCPServer::start_off_fade(int channel, bool has_transition, int transition)
 
    // If transition was not provided, use default transition
    if (!has_transition)
-      transition = DEFAULT_TRANSITION;
+      transition = default_transition;
 
    // Set transition variables
    light_states->fade_progress[channel] = 0;
-   light_states->fade_delta[channel] = 1000.0 / (FPS * transition);   // 1 / FPS * transition if transition was in seconds
+   light_states->fade_delta[channel] = 1000.0 / (fps * transition);   // 1 / FPS * transition if transition was in seconds
    light_states->fade_start[channel] = light_states->fade_current[0]; // Start where last fade ended
    light_states->fade_end[channel] = 0;
 

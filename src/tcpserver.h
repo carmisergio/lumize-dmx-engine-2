@@ -42,17 +42,17 @@ class TCPServer
 {
 public:
    // Constructor
-   TCPServer(int port = DEFAULT_PORT);
+   TCPServer();
 
    // Methods
    bool start();
    void stop();
    void set_light_states(LightStates &light_states, std::timed_mutex &light_states_lock);
    void send_state_update();
+   void configure(int port, int fps, int default_transition);
 
 private:
-   int port,
-       master_socket,
+   int master_socket,
        addrlen,
        new_socket,
        activity,
@@ -73,6 +73,9 @@ private:
 
    LightStates *light_states;
    std::timed_mutex *light_states_lock;
+
+   // Config
+   int port, fps, default_transition;
 
    // Internal functions
    void init_client_sockets_array();

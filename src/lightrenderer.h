@@ -30,13 +30,11 @@
 class LightRenderer
 {
 public:
-   // Constructor
-   LightRenderer();
-
    // Methods
    bool start();
    void stop();
    void set_light_states(LightStates &light_states, std::timed_mutex &light_states_lock);
+   void configure(int fps, int channels);
 
 private:
    DMXSender dmx_sender;
@@ -48,6 +46,9 @@ private:
    int total_wait;
    std::chrono::steady_clock::time_point render_begin_time, render_end_time;
    int wait_time;
+
+   // Config
+   int fps, channels;
 
    // Internal functions
    void main_loop();

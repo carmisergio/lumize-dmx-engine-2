@@ -25,13 +25,11 @@
 class DMXSender
 {
 public:
-  // Constructor
-  DMXSender(int channels = DEFAULT_CHANNELS);
-
   // Methods
   bool start();
   void send_frame(unsigned char *dmx_frame);
   void stop();
+  void configure(int channels = DEFAULT_CHANNELS);
 
 private:
   int channels;                          // Number of channels to output

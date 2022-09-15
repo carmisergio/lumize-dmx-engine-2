@@ -24,3 +24,5 @@
  * - bool debug_only: this message should only be logged if debug log is enabled
  */
 void logger(std::string message, int log_level = LOG_INFO, bool debug_only = false);
+
+void set_enable_debug(bool enable);

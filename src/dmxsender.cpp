@@ -8,21 +8,6 @@
 #include "dmxsender.h" // Include definition of class to be implemented
 
 /*
- *********** CONSTRUCTOR **********
- */
-DMXSender::DMXSender(int channels)
-{
-
-  // Check if number of channels is valid
-  if (channels >= 24 || channels <= 512)
-    this->channels = channels;
-
-  // If it's not valid use default value
-  else
-    this->channels = DEFAULT_CHANNELS;
-}
-
-/*
  ********** PUBLIC FUNCTIONS **********
  */
 
@@ -31,7 +16,7 @@ DMXSender::DMXSender(int channels)
  */
 bool DMXSender::start()
 {
-  logger("[DMX] Initializing...", LOG_INFO, true);
+  logger("[DMX] Initializing with " + std::to_string(channels) + " channels...", LOG_INFO, true);
 
   // Instantiate FTDI library
   if ((ftdi = ftdi_new()) == 0)
@@ -87,6 +72,24 @@ void DMXSender::stop()
   manager_cv.notify_all();
 
   connection_manager_thread.join(); // Wait for the connection manager to exit
+}
+
+/*
+ * Sets up configuration for the DMXSender
+ * Parameters:
+ *  - int channels: Amount of channels to include in the DMX frame
+ */
+void DMXSender::configure(int channels)
+{
+  // Check if number of channels is valid
+  if (channels >= 24 || channels <= 512)
+    this->channels = channels;
+
+  // If it's not valid use default value
+  else
+    this->channels = DEFAULT_CHANNELS;
+
+  std::cout << "Configured to " << channels;
 }
 
 /*

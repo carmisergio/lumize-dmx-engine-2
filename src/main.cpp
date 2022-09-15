@@ -17,6 +17,14 @@
 #include "lightstates.h" // Light statses struct
 #include "logger.h"      // Logger class
 
+struct LumizeConfig
+{
+  int port = 8056;
+  int fps = 100;
+  int default_transition = 750;
+  int channels = 50;
+};
+
 /*
  * Sets up the light states struct
  * Parameters:
@@ -38,8 +46,12 @@ void setup_light_states(LightStates &light_states)
 
 int main()
 {
-  TCPServer tcp_server(8000);
+  std::cout << "##### Lumize DMX Engine 2 #####" << std::endl;
+  std::cout << "Starting..." << std::endl;
+
+  TCPServer tcp_server;
   LightRenderer light_renderer;
+  LumizeConfig config;
 
   // Setup light states structs
   LightStates light_states;
@@ -49,6 +61,11 @@ int main()
   // Give TCPServer and LightRenderer access to light states struct
   tcp_server.set_light_states(light_states, light_states_lock);
   light_renderer.set_light_states(light_states, light_states_lock);
+
+  // Configure TCPServer and LightRenderer
+  tcp_server.configure(config.port, config.fps, config.default_transition);
+  light_renderer.configure(config.fps, config.channels);
+  set_enable_debug(true);
 
   // Start LightRenderer
   if (!light_renderer.start())
