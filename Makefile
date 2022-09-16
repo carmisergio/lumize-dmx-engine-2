@@ -17,14 +17,14 @@ SRC = src
 BUILD = build
 
 # name of the program
-EXECUTABLE = LumizeDmxEngine
+EXECUTABLE = lumizedmxengine2
 
 
 # Main executable target
 $(EXECUTABLE): $(BUILD)/main.o $(BUILD)/dmxsender.o $(BUILD)/tcpserver.o $(BUILD)/lightrenderer.o $(BUILD)/logger.o
 	@ echo "Linking main executable..."
 	@ mkdir -p $(BUILD)
-	@ $(LD) -o LumizeDmxEngine $(PKG_CONFIG) $(BUILD)/main.o $(BUILD)/dmxsender.o $(BUILD)/tcpserver.o $(BUILD)/lightrenderer.o $(BUILD)/logger.o
+	@ $(LD) -o $(EXECUTABLE) $(PKG_CONFIG) $(BUILD)/main.o $(BUILD)/dmxsender.o $(BUILD)/tcpserver.o $(BUILD)/lightrenderer.o $(BUILD)/logger.o
 	@ echo "Build complete!"
 
 $(BUILD)/main.o: $(SRC)/main.cpp
