@@ -25,7 +25,7 @@ bool LightRenderer::start()
 
    rendering_thread = std::thread(&LightRenderer::main_loop, this);
 
-   logger("[LIGHT] Light output started!", LOG_SUCC, false);
+   logger("[LIGHT] Light output started at " + std::to_string(fps) + " FPS!", LOG_SUCC, false);
    return true;
 }
 

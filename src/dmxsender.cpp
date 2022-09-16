@@ -88,8 +88,6 @@ void DMXSender::configure(int channels)
   // If it's not valid use default value
   else
     this->channels = DEFAULT_CHANNELS;
-
-  std::cout << "Configured to " << channels;
 }
 
 /*

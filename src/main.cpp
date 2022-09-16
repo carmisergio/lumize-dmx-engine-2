@@ -14,16 +14,9 @@
 #include "tcpserver.h" // TCPServer class
 #include "lightrenderer.h"
 #include "dmxsender.h"
-#include "lightstates.h" // Light statses struct
-#include "logger.h"      // Logger class
-
-struct LumizeConfig
-{
-  int port = 8056;
-  int fps = 100;
-  int default_transition = 750;
-  int channels = 50;
-};
+#include "lightstates.h"  // Light statses struct
+#include "logger.h"       // Logger class
+#include "configreader.h" // Config reader
 
 /*
  * Sets up the light states struct
@@ -58,6 +51,12 @@ int main()
   setup_light_states(light_states);
   std::timed_mutex light_states_lock;
 
+  // Read config
+  if (!read_config(config))
+  {
+    return 1;
+  }
+
   // Give TCPServer and LightRenderer access to light states struct
   tcp_server.set_light_states(light_states, light_states_lock);
   light_renderer.set_light_states(light_states, light_states_lock);
@@ -70,14 +69,14 @@ int main()
   // Start LightRenderer
   if (!light_renderer.start())
   {
-    return 1;
+    return 2;
   }
 
   // Start the TCPServer
   if (!tcp_server.start())
   {
     light_renderer.stop();
-    return 2;
+    return 3;
   }
 
   // Keep program running
