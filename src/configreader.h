@@ -17,8 +17,17 @@
 
 #include "./logger.h"
 
+// Configuration file path
 #define CONFIG_FILE_PATH "./lumizedmxengine2.conf"
 
+// Default config values
+#define DEFAULT_CONFIG_PORT 8056
+#define DEFAULT_CONFIG_CHANNELS 25
+#define DEFAULT_CONFIG_FPS 50
+#define DEFAULT_CONFIG_DEFAULT_TRANSITION 100 // ms
+#define DEFUALT_CONFIG_LOG_DEBUG false
+
+// Configuration keys
 #define CONFIG_OPTION_PORT "port"
 #define CONFIG_OPTION_CHANNELS "channels"
 #define CONFIG_OPTION_FPS "fps"
@@ -28,11 +37,11 @@
 // Struct that will hold the config
 struct LumizeConfig
 {
-   int port = 8056;
-   int fps = 100;
-   int default_transition = 750;
-   int channels = 50;
-   int log_debug = false;
+   int port = DEFAULT_CONFIG_PORT;
+   int channels = DEFAULT_CONFIG_CHANNELS;
+   int fps = DEFAULT_CONFIG_FPS;
+   int default_transition = DEFAULT_CONFIG_DEFAULT_TRANSITION;
+   int log_debug = DEFUALT_CONFIG_LOG_DEBUG;
 };
 
 bool read_config(LumizeConfig &config);
