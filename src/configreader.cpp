@@ -80,14 +80,168 @@ bool isNumber(std::string &string)
   return true;
 }
 
+/*
+ * Parse "port" config parameter
+ * Parameters:
+ *  - LumizeConfig &config: config struct to update
+ *  - std::string &value_string: reference to input string
+ * Returns: true if parameter was correct
+ */
 bool parse_port_value(LumizeConfig &config, std::string &value_string)
 {
+  int tmp_port;
   // Check that string contains a number
   if (!isNumber(value_string))
   {
     logger("[CONFIG] Error parsing parameter \"port\": value is not a number!", LOG_ERR, false);
     return false;
   }
+
+  // Convert from string to int
+  tmp_port = std::stoi(value_string);
+
+  if (tmp_port < 1000)
+  {
+    logger("[CONFIG] Error parsing parameter \"port\": Value must be greater than 1000!", LOG_ERR, false);
+    return false;
+  }
+
+  // Set config parameter
+  config.port = tmp_port;
+
+  return true;
+}
+
+/*
+ * Parse "channels" config parameter
+ * Parameters:
+ *  - LumizeConfig &config: config struct to update
+ *  - std::string &value_string: reference to input string
+ * Returns: true if parameter was correct
+ */
+bool parse_channels_value(LumizeConfig &config, std::string &value_string)
+{
+  int tmp_channels;
+
+  // Check that string contains a number
+  if (!isNumber(value_string))
+  {
+    logger("[CONFIG] Error parsing parameter \"channels\": value is not a number!", LOG_ERR, false);
+    return false;
+  }
+
+  // Convert from string to int
+  tmp_channels = std::stoi(value_string);
+
+  if (tmp_channels < 1 || tmp_channels > 512)
+  {
+    logger("[CONFIG] Error parsing parameter \"channels\": Value must be between 1 and 512!", LOG_ERR, false);
+    return false;
+  }
+
+  // Set config parameter
+  config.channels = tmp_channels;
+
+  return true;
+}
+
+/*
+ * Parse "fps" config parameter
+ * Parameters:
+ *  - LumizeConfig &config: config struct to update
+ *  - std::string &value_string: reference to input string
+ * Returns: true if parameter was correct
+ */
+bool parse_fps_value(LumizeConfig &config, std::string &value_string)
+{
+  int tmp_fps;
+
+  // Check that string contains a number
+  if (!isNumber(value_string))
+  {
+    logger("[CONFIG] Error parsing parameter \"fps\": value is not a number!", LOG_ERR, false);
+    return false;
+  }
+
+  // Convert from string to int
+  tmp_fps = std::stoi(value_string);
+
+  if (tmp_fps < 10 || tmp_fps > 200)
+  {
+    logger("[CONFIG] Error parsing parameter \"fps\": Value must be between 10 and 200!", LOG_ERR, false);
+    return false;
+  }
+
+  // Set config parameter
+  config.fps = tmp_fps;
+
+  return true;
+}
+
+/*
+ * Parse "default_transition" config parameter
+ * Parameters:
+ *  - LumizeConfig &config: config struct to update
+ *  - std::string &value_string: reference to input string
+ * Returns: true if parameter was correct
+ */
+bool parse_default_transition_value(LumizeConfig &config, std::string &value_string)
+{
+  int tmp_default_transition;
+
+  // Check that string contains a number
+  if (!isNumber(value_string))
+  {
+    logger("[CONFIG] Error parsing parameter \"default_transition\": value is not a number!", LOG_ERR, false);
+    return false;
+  }
+
+  // Convert from string to int
+  tmp_default_transition = std::stoi(value_string);
+
+  if (tmp_default_transition < 0)
+  {
+    logger("[CONFIG] Error parsing parameter \"fps\": Value must be between greater than or equals to 0!", LOG_ERR, false);
+    return false;
+  }
+
+  // Set config parameter
+  config.default_transition = tmp_default_transition;
+
+  return true;
+}
+
+/*
+ * Parse "log_debug" config parameter
+ * Parameters:
+ *  - LumizeConfig &config: config struct to update
+ *  - std::string &value_string: reference to input string
+ * Returns: true if parameter was correct
+ */
+bool parse_log_debug_value(LumizeConfig &config, std::string &value_string)
+{
+  int tmp_log_debug;
+
+  // Differentiate between values
+  if (value_string == "true" || value_string == "yes" || value_string == "on" || value_string == "1")
+  {
+    tmp_log_debug = true;
+  }
+  else if (value_string == "false" || value_string == "no" || value_string == "off" || value_string == "0")
+  {
+    tmp_log_debug = false;
+  }
+  else
+  {
+    // Value was not valid
+    logger("[CONFIG] Error parsing parameter \"log_deubg\": value is not a valid boolean!", LOG_ERR, false);
+    return false;
+  }
+
+  // Set config parameter
+  config.log_debug = tmp_log_debug;
+
+  return true;
 }
 
 /*
@@ -128,13 +282,25 @@ bool read_config(LumizeConfig &config)
               return false;
           }
           else if (string_split[0] == CONFIG_OPTION_CHANNELS)
-            config.channels = std::stoi(string_split[1]);
+          {
+            if (!parse_channels_value(config, string_split[1]))
+              return false;
+          }
           else if (string_split[0] == CONFIG_OPTION_FPS)
-            config.fps = std::stoi(string_split[1]);
+          {
+            if (!parse_fps_value(config, string_split[1]))
+              return false;
+          }
           else if (string_split[0] == CONFIG_OPTION_DEFAULT_TRANSITION)
-            config.default_transition = std::stoi(string_split[1]);
+          {
+            if (!parse_default_transition_value(config, string_split[1]))
+              return false;
+          }
           else if (string_split[0] == CONFIG_OPTION_LOG_DEBUG)
-            config.log_debug = string_split[1] == "true" || string_split[1] == "1" || string_split[1] == "yes";
+          {
+            if (!parse_log_debug_value(config, string_split[1]))
+              return false;
+          }
         }
     }
 
