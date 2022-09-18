@@ -25,13 +25,17 @@
 #define DEFAULT_CONFIG_CHANNELS 25
 #define DEFAULT_CONFIG_FPS 50
 #define DEFAULT_CONFIG_DEFAULT_TRANSITION 1000 // ms
-#define DEFUALT_CONFIG_LOG_DEBUG false
+#define DEFAULT_CONFIG_ENABLE_PERSISTENCY false
+#define DEFAULT_CONFIG_PERSISTENCY_FILE_PATH ""
+#define DEFAULT_CONFIG_LOG_DEBUG false
 
 // Configuration keys
 #define CONFIG_OPTION_PORT "port"
 #define CONFIG_OPTION_CHANNELS "channels"
 #define CONFIG_OPTION_FPS "fps"
 #define CONFIG_OPTION_DEFAULT_TRANSITION "default_transition"
+#define CONFIG_OPTION_ENABLE_PERSISTENCY "enable_persistency"
+#define CONFIG_OPTION_PERSISTENCY_PERSISTENCY_FILE_PATH "persistency_file_path"
 #define CONFIG_OPTION_LOG_DEBUG "log_debug"
 
 // Struct that will hold the config
@@ -41,7 +45,9 @@ struct LumizeConfig
    int channels = DEFAULT_CONFIG_CHANNELS;
    int fps = DEFAULT_CONFIG_FPS;
    int default_transition = DEFAULT_CONFIG_DEFAULT_TRANSITION;
-   int log_debug = DEFUALT_CONFIG_LOG_DEBUG;
+   bool enable_persistency = DEFAULT_CONFIG_ENABLE_PERSISTENCY;
+   std::string persistency_file_path = DEFAULT_CONFIG_PERSISTENCY_FILE_PATH;
+   bool log_debug = DEFAULT_CONFIG_LOG_DEBUG;
 };
 
 bool read_config(LumizeConfig &config);

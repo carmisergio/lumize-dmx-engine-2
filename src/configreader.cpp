@@ -63,6 +63,11 @@ void recap_config(LumizeConfig &config)
   logger("         Channels: " + std::to_string(config.channels), LOG_INFO, false);
   logger("         FPS: " + std::to_string(config.fps), LOG_INFO, false);
   logger("         Default transition: " + std::to_string(config.default_transition) + "ms", LOG_INFO, false);
+  logger("         Enable persistency: " + humanize_bool(config.enable_persistency), LOG_INFO, false);
+
+  if (config.enable_persistency)
+    logger("         Persistency file path: " + config.persistency_file_path, LOG_INFO, false);
+
   logger("         Debug logging: " + humanize_bool(config.log_debug), LOG_INFO, false);
 }
 
@@ -212,6 +217,53 @@ bool parse_default_transition_value(LumizeConfig &config, std::string &value_str
 }
 
 /*
+ * Parse "enable_persistency" config parameter
+ * Parameters:
+ *  - LumizeConfig &config: config struct to update
+ *  - std::string &value_string: reference to input string
+ * Returns: true if parameter was correct
+ */
+bool parse_enable_persistency_value(LumizeConfig &config, std::string &value_string)
+{
+  bool tmp_enable_persistency;
+
+  // Differentiate between values
+  if (value_string == "true" || value_string == "yes" || value_string == "on" || value_string == "1")
+  {
+    tmp_enable_persistency = true;
+  }
+  else if (value_string == "false" || value_string == "no" || value_string == "off" || value_string == "0")
+  {
+    tmp_enable_persistency = false;
+  }
+  else
+  {
+    // Value was not valid
+    logger("[CONFIG] Error parsing parameter \"enable_persistency\": value is not a valid boolean!", LOG_ERR, false);
+    return false;
+  }
+
+  // Set config parameter
+  config.enable_persistency = tmp_enable_persistency;
+
+  return true;
+}
+
+/*
+ * Parse "persistency_file_path" config parameter
+ * Parameters:
+ *  - LumizeConfig &config: config struct to update
+ *  - std::string &value_string: reference to input string
+ * Returns: true if parameter was correct
+ */
+bool parse_persistency_file_path_value(LumizeConfig &config, std::string &value_string)
+{
+  // Set config parameter
+  config.persistency_file_path = value_string;
+
+  return true;
+}
+/*
  * Parse "log_debug" config parameter
  * Parameters:
  *  - LumizeConfig &config: config struct to update
@@ -220,7 +272,7 @@ bool parse_default_transition_value(LumizeConfig &config, std::string &value_str
  */
 bool parse_log_debug_value(LumizeConfig &config, std::string &value_string)
 {
-  int tmp_log_debug;
+  bool tmp_log_debug;
 
   // Differentiate between values
   if (value_string == "true" || value_string == "yes" || value_string == "on" || value_string == "1")
@@ -296,6 +348,16 @@ bool read_config(LumizeConfig &config)
             if (!parse_default_transition_value(config, string_split[1]))
               return false;
           }
+          else if (string_split[0] == CONFIG_OPTION_ENABLE_PERSISTENCY)
+          {
+            if (!parse_enable_persistency_value(config, string_split[1]))
+              return false;
+          }
+          else if (string_split[0] == CONFIG_OPTION_PERSISTENCY_PERSISTENCY_FILE_PATH)
+          {
+            if (!parse_persistency_file_path_value(config, string_split[1]))
+              return false;
+          }
           else if (string_split[0] == CONFIG_OPTION_LOG_DEBUG)
           {
             if (!parse_log_debug_value(config, string_split[1]))
@@ -309,7 +371,7 @@ bool read_config(LumizeConfig &config)
   }
   else
   {
-    logger("[CONFIG] Error opening config file!", LOG_ERR, false);
+    logger("[CONFIG] Error opening config file: " + std::string(CONFIG_FILE_PATH), LOG_ERR, false);
     return false;
   }
 
