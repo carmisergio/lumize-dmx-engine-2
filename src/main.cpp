@@ -17,6 +17,7 @@
 #include "lightstates.h"  // Light statses struct
 #include "logger.h"       // Logger class
 #include "configreader.h" // Config reader
+#include "persistency.h"  // Persistency writer and reader
 
 /*
  * Sets up the light states struct
@@ -45,6 +46,7 @@ int main()
   TCPServer tcp_server;
   LightRenderer light_renderer;
   LumizeConfig config;
+  PersistencyWriter persistency_writer;
 
   // Setup light states structs
   LightStates light_states;
@@ -60,10 +62,12 @@ int main()
   // Give TCPServer and LightRenderer access to light states struct
   tcp_server.set_light_states(light_states, light_states_lock);
   light_renderer.set_light_states(light_states, light_states_lock);
+  persistency_writer.set_light_states(light_states, light_states_lock);
 
   // Configure TCPServer and LightRenderer
   tcp_server.configure(config.port, config.fps, config.default_transition);
   light_renderer.configure(config.fps, config.channels);
+  persistency_writer.configure(config.persistency_file_path, 1000);
   set_enable_debug(true);
 
   // Start LightRenderer
@@ -77,6 +81,14 @@ int main()
   {
     light_renderer.stop();
     return 3;
+  }
+
+  // Start the PersistencyWriter
+  if (!persistency_writer.start())
+  {
+    light_renderer.stop();
+    tcp_server.stop();
+    return 4;
   }
 
   // Keep program running

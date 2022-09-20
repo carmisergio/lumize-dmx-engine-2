@@ -21,10 +21,10 @@ EXECUTABLE = lumizedmxengine2
 
 
 # Main executable target
-$(EXECUTABLE): $(BUILD)/main.o $(BUILD)/dmxsender.o $(BUILD)/tcpserver.o $(BUILD)/lightrenderer.o $(BUILD)/logger.o $(BUILD)/configreader.o
+$(EXECUTABLE): $(BUILD)/main.o $(BUILD)/dmxsender.o $(BUILD)/tcpserver.o $(BUILD)/lightrenderer.o $(BUILD)/logger.o $(BUILD)/configreader.o $(BUILD)/persistency.o
 	@ echo "Linking main executable..."
 	@ mkdir -p $(BUILD)
-	@ $(LD) -o $(EXECUTABLE) $(PKG_CONFIG) $(BUILD)/main.o $(BUILD)/dmxsender.o $(BUILD)/tcpserver.o $(BUILD)/lightrenderer.o $(BUILD)/logger.o $(BUILD)/configreader.o
+	@ $(LD) -o $(EXECUTABLE) $(PKG_CONFIG) $(BUILD)/main.o $(BUILD)/dmxsender.o $(BUILD)/tcpserver.o $(BUILD)/lightrenderer.o $(BUILD)/logger.o $(BUILD)/configreader.o $(BUILD)/persistency.o
 	@ echo "Build complete!"
 
 $(BUILD)/main.o: $(SRC)/main.cpp
@@ -62,6 +62,12 @@ $(BUILD)/configreader.o: $(SRC)/configreader.cpp $(SRC)/configreader.h
 	@ mkdir -p $(BUILD)
 	@ $(CC) $(CFLAGS) -o $(BUILD)/configreader.o $(SRC)/configreader.cpp
 	@ echo "Finished compilation for configreader.cpp"
+
+$(BUILD)/persistency.o: $(SRC)/persistency.cpp $(SRC)/persistency.h
+	@ echo "Compiling persistency.cpp..."
+	@ mkdir -p $(BUILD)
+	@ $(CC) $(CFLAGS) -o $(BUILD)/persistency.o $(SRC)/persistency.cpp
+	@ echo "Finished compilation for persistency.cpp"
 
 # Clean all build files
 clean:

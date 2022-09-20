@@ -20,4 +20,7 @@ struct LightStates
    int fade_start[512];
    int fade_end[512];
    int fade_current[512];
+
+   // Updated flag for persistency
+   bool updated = false;
 };
