@@ -90,6 +90,7 @@ void TCPServer::stop()
  * Give TCPServer access to LightStates struct
  * Parameters:
  *  - LightStates &light_states: reference to light states struct
+ *  - std::timed_mutex &light_states_lock: reference to light states mutex
  */
 void TCPServer::set_light_states(LightStates &light_states, std::timed_mutex &light_states_lock)
 {
@@ -110,6 +111,16 @@ void TCPServer::configure(int port, int fps, int default_transition)
    this->port = port;
    this->fps = fps;
    this->default_transition = default_transition;
+}
+
+/*
+ * Give TCPServer access to persistency_writer_cv
+ * Parameters:
+ *  - std::condition_variable &persistency_writer_cv: reference to persistency writer cv
+ */
+void TCPServer::set_persistency_writer_cv(std::condition_variable &persistency_writer_cv)
+{
+   this->persistency_writer_cv = &persistency_writer_cv;
 }
 
 /*
@@ -594,6 +605,9 @@ void TCPServer::start_on_fade(int channel, bool has_brightness, bool has_transit
    light_states_lock->unlock();
 
    logger("[LIGHT] Starting fade, channel: " + std::to_string(channel) + ", start: " + std::to_string(light_states->fade_start[channel]) + ", end: " + std::to_string(light_states->fade_end[channel]) + ", delta: " + std::to_string(light_states->fade_delta[channel]), LOG_INFO, true);
+
+   // Notify persistency writer of change
+   persistency_writer_cv->notify_all();
 }
 
 void TCPServer::start_off_fade(int channel, bool has_transition, int transition)
@@ -618,4 +632,7 @@ void TCPServer::start_off_fade(int channel, bool has_transition, int transition)
    light_states_lock->unlock();
 
    logger("[LIGHT] Starting fade, channel: " + std::to_string(channel) + ", start: " + std::to_string(light_states->fade_start[channel]) + ", end: " + std::to_string(light_states->fade_end[channel]) + ", delta: " + std::to_string(light_states->fade_delta[channel]), LOG_INFO, true);
+
+   // Notify persistency writer of change
+   persistency_writer_cv->notify_all();
 }

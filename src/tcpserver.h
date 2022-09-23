@@ -20,6 +20,7 @@
 #include <vector>
 #include <sstream>
 #include <mutex>
+#include <condition_variable>
 
 // Network libraries
 #include <sys/types.h>
@@ -50,6 +51,7 @@ public:
    void set_light_states(LightStates &light_states, std::timed_mutex &light_states_lock);
    void send_state_update();
    void configure(int port, int fps, int default_transition);
+   void set_persistency_writer_cv(std::condition_variable &persistency_writer_cv);
 
 private:
    int master_socket,
@@ -73,6 +75,9 @@ private:
 
    LightStates *light_states;
    std::timed_mutex *light_states_lock;
+
+   // PersistencyWriter condition variable
+   std::condition_variable *persistency_writer_cv;
 
    // Config
    int port, fps, default_transition;

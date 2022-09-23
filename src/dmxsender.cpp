@@ -47,7 +47,7 @@ void DMXSender::send_frame(unsigned char *dmx_frame)
         ftdi_write_data(ftdi, &start_code, 1) < 0 ||
         ftdi_write_data(ftdi, dmx_frame, channels) < 0)
     {
-      logger("[DMX] Error sending DMX frame! Not ready to send!", LOG_ERR);
+      logger("[DMX] Error sending DMX frame! Not ready to send!", LOG_WARN);
       // Tell the connection manager to stop waiting
       {
         std::lock_guard<std::mutex> lk(manager_mutex);
@@ -188,7 +188,7 @@ void DMXSender::manage_connection()
         logger("[DMX] USB connection to FTDI chip enstablished. Ready to send!", LOG_SUCC);
       }
       else
-        logger("[DMX] Unable to connect to FTDI device, retrying in a few seconds...", LOG_ERR);
+        logger("[DMX] Unable to connect to FTDI device, retrying in a few seconds...", LOG_WARN);
     }
 
     manager_cv.wait_for(lk, std::chrono::milliseconds(2000));

@@ -10,6 +10,7 @@
 #include <thread>
 #include <chrono>
 #include <mutex>
+#include <condition_variable>
 
 #include "tcpserver.h" // TCPServer class
 #include "lightrenderer.h"
@@ -59,6 +60,9 @@ int main()
     return 1;
   }
 
+  // Initialize condition variable for PersistencyWriter
+  std::condition_variable &persistency_writer_cv = persistency_writer.get_cv();
+
   // Give TCPServer and LightRenderer access to light states struct
   tcp_server.set_light_states(light_states, light_states_lock);
   light_renderer.set_light_states(light_states, light_states_lock);
@@ -67,8 +71,11 @@ int main()
   // Configure TCPServer and LightRenderer
   tcp_server.configure(config.port, config.fps, config.default_transition);
   light_renderer.configure(config.fps, config.channels);
-  persistency_writer.configure(config.persistency_file_path, 1000);
+  persistency_writer.configure(config.persistency_file_path, config.persistency_write_interval);
   set_enable_debug(true);
+
+  // Give access to persistency_writer_cv
+  tcp_server.set_persistency_writer_cv(persistency_writer_cv);
 
   // Start LightRenderer
   if (!light_renderer.start())

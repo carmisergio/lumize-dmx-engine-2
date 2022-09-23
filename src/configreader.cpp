@@ -258,6 +258,12 @@ bool parse_enable_persistency_value(LumizeConfig &config, std::string &value_str
  */
 bool parse_persistency_file_path_value(LumizeConfig &config, std::string &value_string)
 {
+  if (value_string == "")
+  {
+    logger("[CONFIG] Error parsing parameter \"persistency_file_path\": value cannot be empty!", LOG_ERR, false);
+    return false;
+  }
+
   // Set config parameter
   config.persistency_file_path = value_string;
 
@@ -353,7 +359,7 @@ bool read_config(LumizeConfig &config)
             if (!parse_enable_persistency_value(config, string_split[1]))
               return false;
           }
-          else if (string_split[0] == CONFIG_OPTION_PERSISTENCY_PERSISTENCY_FILE_PATH)
+          else if (string_split[0] == CONFIG_OPTION_PERSISTENCY_FILE_PATH)
           {
             if (!parse_persistency_file_path_value(config, string_split[1]))
               return false;

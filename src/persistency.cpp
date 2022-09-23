@@ -62,6 +62,16 @@ void PersistencyWriter::configure(std::string file_path, int interval)
 }
 
 /*
+ * Give access to internal condition variable to be able to notify PersistencyWiter
+ * of change of light states
+ * Returns: condition variable
+ */
+std::condition_variable &PersistencyWriter::get_cv()
+{
+  return main_loop_cv;
+}
+
+/*
  ********** PRIVATE FUNCTIONS **********
  */
 
@@ -74,8 +84,8 @@ void PersistencyWriter::main_loop()
   {
     std::unique_lock<std::mutex> lk(main_loop_mutex);
 
-    std::cout << "Checking persistency updates" << std::endl;
+    std::cout << "Saving persistency file" << std::endl;
 
-    main_loop_cv.wait_for(lk, std::chrono::milliseconds(interval));
+    main_loop_cv.wait_for(lk, std::chrono::seconds(interval));
   }
 }

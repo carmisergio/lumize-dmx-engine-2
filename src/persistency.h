@@ -28,6 +28,7 @@ public:
   void stop();
   void configure(std::string file_path, int interval);
   void set_light_states(LightStates &light_states, std::timed_mutex &light_states_lock);
+  std::condition_variable &get_cv();
 
 private:
   std::string file_path;
@@ -37,6 +38,7 @@ private:
   std::mutex main_loop_mutex;
   std::condition_variable main_loop_cv;
 
+  // Light states
   LightStates *light_states;
   std::timed_mutex *light_states_lock;
 
