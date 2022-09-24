@@ -11,6 +11,7 @@
 #include <chrono>
 #include <mutex>
 #include <condition_variable>
+#include <fstream>
 
 // logger helper
 #include "logger.h"
@@ -44,4 +45,6 @@ private:
 
   // Internal functions
   void main_loop();
+  std::string generate_states_string();
+  void write_persistency_file();
 };

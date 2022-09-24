@@ -72,7 +72,7 @@ int main()
   tcp_server.configure(config.port, config.fps, config.default_transition);
   light_renderer.configure(config.fps, config.channels);
   persistency_writer.configure(config.persistency_file_path, config.persistency_write_interval);
-  set_enable_debug(true);
+  set_enable_debug(config.log_debug);
 
   // Give access to persistency_writer_cv
   tcp_server.set_persistency_writer_cv(persistency_writer_cv);
@@ -90,12 +90,16 @@ int main()
     return 3;
   }
 
-  // Start the PersistencyWriter
-  if (!persistency_writer.start())
+  // Start the PersistencyWriter if it's enabled
+  if (config.enable_persistency)
   {
-    light_renderer.stop();
-    tcp_server.stop();
-    return 4;
+
+    if (!persistency_writer.start())
+    {
+      light_renderer.stop();
+      tcp_server.stop();
+      return 4;
+    }
   }
 
   // Keep program running

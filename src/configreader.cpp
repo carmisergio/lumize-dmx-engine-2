@@ -66,7 +66,10 @@ void recap_config(LumizeConfig &config)
   logger("         Enable persistency: " + humanize_bool(config.enable_persistency), LOG_INFO, false);
 
   if (config.enable_persistency)
+  {
     logger("         Persistency file path: " + config.persistency_file_path, LOG_INFO, false);
+    logger("         Persistency write interval: " + std::to_string(config.persistency_write_interval), LOG_INFO, false);
+  }
 
   logger("         Debug logging: " + humanize_bool(config.log_debug), LOG_INFO, false);
 }
@@ -269,6 +272,40 @@ bool parse_persistency_file_path_value(LumizeConfig &config, std::string &value_
 
   return true;
 }
+
+/*
+ * Parse "persistency_write_interval" config parameter
+ * Parameters:
+ *  - LumizeConfig &config: config struct to update
+ *  - std::string &value_string: reference to input string
+ * Returns: true if parameter was correct
+ */
+bool parse_persistency_write_interval_value(LumizeConfig &config, std::string &value_string)
+{
+  int tmp_persistency_write_interval;
+
+  // Check that string contains a number
+  if (!isNumber(value_string))
+  {
+    logger("[CONFIG] Error parsing parameter \"persistency_write_interval\": value is not a number!", LOG_ERR, false);
+    return false;
+  }
+
+  // Convert from string to int
+  tmp_persistency_write_interval = std::stoi(value_string);
+
+  if (tmp_persistency_write_interval <= 0)
+  {
+    logger("[CONFIG] Error parsing parameter \"fps\": Value must be greater than 0!", LOG_ERR, false);
+    return false;
+  }
+
+  // Set config parameter
+  config.persistency_write_interval = tmp_persistency_write_interval;
+
+  return true;
+}
+
 /*
  * Parse "log_debug" config parameter
  * Parameters:
@@ -362,6 +399,11 @@ bool read_config(LumizeConfig &config)
           else if (string_split[0] == CONFIG_OPTION_PERSISTENCY_FILE_PATH)
           {
             if (!parse_persistency_file_path_value(config, string_split[1]))
+              return false;
+          }
+          else if (string_split[0] == CONFIG_OPTION_PERSISTENCY_WRITE_INTERVAL)
+          {
+            if (!parse_persistency_write_interval_value(config, string_split[1]))
               return false;
           }
           else if (string_split[0] == CONFIG_OPTION_LOG_DEBUG)

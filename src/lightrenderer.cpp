@@ -101,6 +101,7 @@ void LightRenderer::main_loop()
                   light_states->fade_delta[i] = 0;
                   light_states->fade_progress[i] = 0;
                   light_states->fade_current[i] = light_states->fade_end[i];
+                  logger("[LIGHT] Fade finished, channel: " + std::to_string(i), LOG_INFO, true);
                }
                else
                {
