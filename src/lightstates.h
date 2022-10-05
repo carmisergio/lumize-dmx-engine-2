@@ -21,6 +21,8 @@ struct LightStates
    int fade_end[512];
    int fade_current[512];
 
-   // Updated flag for persistency
-   bool updated = false;
+   // Pushbutton dimming states
+   bool pushbutton_fade[512];
+   bool pushbutton_fade_up[512];
+   double pushbutton_fade_current[512];
 };

@@ -63,6 +63,7 @@ void recap_config(LumizeConfig &config)
   logger("         Channels: " + std::to_string(config.channels), LOG_INFO, false);
   logger("         FPS: " + std::to_string(config.fps), LOG_INFO, false);
   logger("         Default transition: " + std::to_string(config.default_transition) + "ms", LOG_INFO, false);
+  logger("         Pushbutton fade delta: " + std::to_string(config.pushbutton_fade_delta), LOG_INFO, false);
   logger("         Enable persistency: " + humanize_bool(config.enable_persistency), LOG_INFO, false);
 
   if (config.enable_persistency)
@@ -215,6 +216,39 @@ bool parse_default_transition_value(LumizeConfig &config, std::string &value_str
 
   // Set config parameter
   config.default_transition = tmp_default_transition;
+
+  return true;
+}
+
+/*
+ * Parse "pushbutton_fade_delta" config parameter
+ * Parameters:
+ *  - LumizeConfig &config: config struct to update
+ *  - std::string &value_string: reference to input string
+ * Returns: true if parameter was correct
+ */
+bool parse_pushbutton_fade_delta_value(LumizeConfig &config, std::string &value_string)
+{
+  int tmp_pushbutton_fade_delta;
+
+  // Check that string contains a number
+  if (!isNumber(value_string))
+  {
+    logger("[CONFIG] Error parsing parameter \"pushbutton_fade_delta\": value is not a number!", LOG_ERR, false);
+    return false;
+  }
+
+  // Convert from string to int
+  tmp_pushbutton_fade_delta = std::stoi(value_string);
+
+  if (tmp_pushbutton_fade_delta < 0)
+  {
+    logger("[CONFIG] Error parsing parameter \"fps\": Value must be between greater than or equals to 0!", LOG_ERR, false);
+    return false;
+  }
+
+  // Set config parameter
+  config.pushbutton_fade_delta = tmp_pushbutton_fade_delta;
 
   return true;
 }
@@ -389,6 +423,11 @@ bool read_config(LumizeConfig &config)
           else if (string_split[0] == CONFIG_OPTION_DEFAULT_TRANSITION)
           {
             if (!parse_default_transition_value(config, string_split[1]))
+              return false;
+          }
+          else if (string_split[0] == CONFIG_OPTION_PUSHBUTTON_FADE_DELTA)
+          {
+            if (!parse_pushbutton_fade_delta_value(config, string_split[1]))
               return false;
           }
           else if (string_split[0] == CONFIG_OPTION_ENABLE_PERSISTENCY)

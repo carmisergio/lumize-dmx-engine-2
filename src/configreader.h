@@ -24,7 +24,8 @@
 #define DEFAULT_CONFIG_PORT 8056
 #define DEFAULT_CONFIG_CHANNELS 25
 #define DEFAULT_CONFIG_FPS 50
-#define DEFAULT_CONFIG_DEFAULT_TRANSITION 1000 // ms
+#define DEFAULT_CONFIG_DEFAULT_TRANSITION 1000  // ms
+#define DEFAULT_CONFIG_PUSHBUTTON_FADE_DELTA 25 // value per second
 #define DEFAULT_CONFIG_ENABLE_PERSISTENCY false
 #define DEFAULT_CONFIG_PERSISTENCY_FILE_PATH "/var/lib/lumizedmxengine2/persistency"
 #define DEFAULT_CONFIG_PERSISTENCY_WRITE_INTERVAL 600 // s
@@ -35,6 +36,7 @@
 #define CONFIG_OPTION_CHANNELS "channels"
 #define CONFIG_OPTION_FPS "fps"
 #define CONFIG_OPTION_DEFAULT_TRANSITION "default_transition"
+#define CONFIG_OPTION_PUSHBUTTON_FADE_DELTA "pushbutton_fade_delta"
 #define CONFIG_OPTION_ENABLE_PERSISTENCY "enable_persistency"
 #define CONFIG_OPTION_PERSISTENCY_FILE_PATH "persistency_file_path"
 #define CONFIG_OPTION_PERSISTENCY_WRITE_INTERVAL "persistency_write_interval"
@@ -47,6 +49,7 @@ struct LumizeConfig
    int channels = DEFAULT_CONFIG_CHANNELS;
    int fps = DEFAULT_CONFIG_FPS;
    int default_transition = DEFAULT_CONFIG_DEFAULT_TRANSITION;
+   int pushbutton_fade_delta = DEFAULT_CONFIG_PUSHBUTTON_FADE_DELTA;
    bool enable_persistency = DEFAULT_CONFIG_ENABLE_PERSISTENCY;
    std::string persistency_file_path = DEFAULT_CONFIG_PERSISTENCY_FILE_PATH;
    int persistency_write_interval = DEFAULT_CONFIG_PERSISTENCY_WRITE_INTERVAL;
