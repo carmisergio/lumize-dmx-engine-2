@@ -593,8 +593,8 @@ void TCPServer::start_on_fade(int channel, bool has_brightness, bool has_transit
 
    // Set fade variables
    light_states->fade_progress[channel] = 0;
-   light_states->fade_delta[channel] = 1000.0 / (fps * transition);   // 1 / FPS * transition if transition was in seconds
-   light_states->fade_start[channel] = light_states->fade_current[0]; // Start where last fade ended
+   light_states->fade_delta[channel] = 1000.0 / (fps * transition);         // 1 / FPS * transition if transition was in seconds
+   light_states->fade_start[channel] = light_states->fade_current[channel]; // Start where last fade ended
    light_states->fade_end[channel] = brightness;
 
    // Set outward facing states
@@ -621,8 +621,8 @@ void TCPServer::start_off_fade(int channel, bool has_transition, int transition)
 
    // Set transition variables
    light_states->fade_progress[channel] = 0;
-   light_states->fade_delta[channel] = 1000.0 / (fps * transition);   // 1 / FPS * transition if transition was in seconds
-   light_states->fade_start[channel] = light_states->fade_current[0]; // Start where last fade ended
+   light_states->fade_delta[channel] = 1000.0 / (fps * transition);         // 1 / FPS * transition if transition was in seconds
+   light_states->fade_start[channel] = light_states->fade_current[channel]; // Start where last fade ended
    light_states->fade_end[channel] = 0;
 
    // Set outward facing states

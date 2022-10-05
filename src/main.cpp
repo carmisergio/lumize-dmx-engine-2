@@ -77,6 +77,10 @@ int main()
   // Give access to persistency_writer_cv
   tcp_server.set_persistency_writer_cv(persistency_writer_cv);
 
+  // Read persistency file
+  if (config.enable_persistency)
+    read_persistency_file(config.persistency_file_path, light_states, light_states_lock);
+
   // Start LightRenderer
   if (!light_renderer.start())
   {

@@ -12,11 +12,15 @@
 #include <mutex>
 #include <condition_variable>
 #include <fstream>
+#include <vector>
+#include <sstream>
 
 // logger helper
 #include "logger.h"
 
 #include "lightstates.h"
+
+#define PERSISTENCY_FILE_VERSION_STRING "2.0"
 
 /*
  * Definition of the PersistencyWriter class
@@ -48,3 +52,8 @@ private:
   std::string generate_states_string();
   void write_persistency_file();
 };
+
+/*
+ * Definition of read_persistency_file function
+ */
+bool read_persistency_file(std::string file_path, LightStates &light_states, std::timed_mutex &light_states_lock);

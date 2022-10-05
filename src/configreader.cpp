@@ -24,7 +24,7 @@ void remove_whitespace(std::string &string)
  *  - char separator: separator characters
  * Returns: std:vector<std::string> output vector
  */
-std::vector<std::string> split_string(std::string input, char seperator)
+std::vector<std::string> configreader_split_string(std::string input, char seperator)
 {
   std::string section;
   std::stringstream stream(input);
@@ -363,7 +363,7 @@ bool read_config(LumizeConfig &config)
         continue;
 
       // Split string by = character
-      string_split = split_string(line, '=');
+      string_split = configreader_split_string(line, '=');
 
       // Check that the message is of right format
       if (string_split.size() > 1)
