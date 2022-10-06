@@ -337,6 +337,10 @@ void TCPServer::parse_message(std::string message, int client_fd)
       turn_off_message(message_split);
    else if (command == "on")
       turn_on_message(message_split);
+   else if (command == "pfstart")
+      pushbutton_fade_start_message(message_split);
+   else if (command == "pfend")
+      pushbutton_fade_end_message(message_split);
    else
       logger("[TCP] Received: Unknown message type", LOG_WARN, true);
 }
@@ -576,6 +580,123 @@ void TCPServer::turn_on_message(std::vector<std::string> split_message)
    }
 
    start_on_fade(channel, has_brightness, has_transition, brightness, transition);
+}
+
+/*
+ * Handles a pushbutton fade end message from the client
+ * parameters:
+ *  - std::vector<std::string> split_message: complete message to get parameters
+ */
+void TCPServer::pushbutton_fade_end_message(std::vector<std::string> split_message)
+{
+   int channel;
+
+   // Check if there are is at least space for the required fields
+   if (split_message.size() < 2)
+   {
+      logger("[TCP] Pushbutton Fade End Command, no channel given!", LOG_WARN, true);
+      return;
+   }
+
+   // Convert channel number string to int
+   try
+   {
+      channel = std::stoi(split_message[1]);
+
+      // Check that channel value is acceptable
+      if (channel < 0 || channel > 511)
+      {
+         logger("[TCP] Pushbutton Fade End Command, channel number out of range!", LOG_WARN, true);
+         return;
+      }
+   }
+   catch (const std::exception &e)
+   {
+      logger("[TCP] Pushbutton Fade End Command, bad channel!", LOG_WARN, true);
+      return;
+   }
+
+   logger("[TCP] Pushbutton Fade End Command, channel: " + std::to_string(channel), LOG_INFO, true);
+}
+
+/*
+ * Handles a pushbutton fade start message from the client
+ * parameters:
+ *  - std::vector<std::string> split_message: complete message to get parameters
+ */
+void TCPServer::pushbutton_fade_start_message(std::vector<std::string> split_message)
+{
+   bool has_direction = false;
+   int channel, tmp_direction;
+   bool is_direction_up;
+
+   // Check if there are is at least space for the required fields
+   if (split_message.size() < 2)
+   {
+      logger("[TCP] Pushbutton Fade Start Command, no channel given!", LOG_WARN, true);
+      return;
+   }
+
+   // Convert channel number string to int
+   try
+   {
+      channel = std::stoi(split_message[1]);
+
+      // Check that channel value is acceptable
+      if (channel < 0 || channel > 511)
+      {
+         logger("[TCP] Pushbutton Fade Start Command, channel number out of range!", LOG_WARN, true);
+         return;
+      }
+   }
+   catch (const std::exception &e)
+   {
+      logger("[TCP] Pushbutton Fade Start Command, bad channel!", LOG_WARN, true);
+      return;
+      return;
+   }
+
+   // Parse parameters
+   for (long unsigned int i = 2; i < split_message.size(); i++)
+   {
+      // Check that the parameter isn't empty
+      if (split_message[i].length() < 1)
+         continue;
+
+      // Parameter is transition
+      if (split_message[i].at(0) == 'd')
+      {
+         if (!has_direction)
+         {
+            // Check and store transition
+            try
+            {
+               tmp_direction = std::stoi(split_message[i].substr(1));
+               // Check that transition value is acceptable
+               if (tmp_direction == 1)
+                  is_direction_up = true;
+               else if (tmp_direction == 0)
+                  is_direction_up = false;
+               else
+               {
+                  logger("[TCP] Pushbutton Fade Start Command, direction value can only be 0 or 1!", LOG_WARN, true);
+                  return;
+               }
+            }
+            catch (const std::exception &e)
+            {
+               logger("[TCP] Pushbutton Fade Start Command, bad direction!", LOG_WARN, true);
+               return;
+            }
+            has_direction = true;
+         }
+      }
+   }
+
+   if (has_direction)
+      logger("[TCP] Pushbutton Fade Start Command, channel: " + std::to_string(channel) + ", direction: " + (is_direction_up ? "up" : "down"), LOG_INFO, true);
+   else
+      logger("[TCP] Pushbutton Fade Start Command, channel: " + std::to_string(channel), LOG_INFO, true);
 }
 
 void TCPServer::start_on_fade(int channel, bool has_brightness, bool has_transition, int brightness, int transition)
