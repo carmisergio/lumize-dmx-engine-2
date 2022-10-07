@@ -36,6 +36,9 @@ void setup_light_states(LightStates &light_states)
     light_states.fade_start[i] = 0;
     light_states.fade_end[i] = 0;
     light_states.fade_current[i] = 0;
+    light_states.pushbutton_fade[i] = false;
+    light_states.pushbutton_fade_up[i] = true;
+    light_states.pushbutton_fade_current[i] = 0;
   }
 }
 
@@ -70,7 +73,7 @@ int main()
 
   // Configure TCPServer and LightRenderer
   tcp_server.configure(config.port, config.fps, config.default_transition);
-  light_renderer.configure(config.fps, config.channels);
+  light_renderer.configure(config.fps, config.channels, config.pushbutton_fade_delta);
   persistency_writer.configure(config.persistency_file_path, config.persistency_write_interval);
   set_enable_debug(config.log_debug);
 

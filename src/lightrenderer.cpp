@@ -59,10 +59,11 @@ void LightRenderer::set_light_states(LightStates &light_states, std::timed_mutex
  *  - int fps: FPS to render at
  *  - int channels: Amount of channels to output
  */
-void LightRenderer::configure(int fps, int channels)
+void LightRenderer::configure(int fps, int channels, int pushbutton_fade_delta)
 {
    this->fps = fps;
    this->channels = channels;
+   this->pushbutton_fade_delta_divided = (double)pushbutton_fade_delta / fps;
 
    // Configure DMXSender
    dmx_sender.configure(channels);
@@ -88,6 +89,7 @@ void LightRenderer::main_loop()
          // If we were able to acquire the lock, compute new frame
          for (int i = 0; i < 512; i++)
          {
+            // No fade active
             if (light_states->fade_delta[i] == 0)
                dmx_frame[i] = light_states->fade_current[i];
             else
@@ -109,6 +111,34 @@ void LightRenderer::main_loop()
                   light_states->fade_current[i] = (double)(light_states->fade_end[i] - light_states->fade_start[i]) * ease_in_out_sine(light_states->fade_progress[i]) + light_states->fade_start[i];
                   dmx_frame[i] = light_states->fade_current[i];
                }
+            }
+
+            // There is a pushbutton fade active
+            if (light_states->pushbutton_fade[i])
+            {
+
+               // Calculate new value
+               if (light_states->pushbutton_fade_up[i])
+                  light_states->pushbutton_fade_current[i] += pushbutton_fade_delta_divided;
+               else
+                  light_states->pushbutton_fade_current[i] -= pushbutton_fade_delta_divided;
+
+               // Check limits
+               if (light_states->pushbutton_fade_current[i] >= 255)
+               {
+                  light_states->pushbutton_fade_current[i] = 255;
+                  // Invert direction
+                  light_states->pushbutton_fade_up[i] = false;
+               }
+               else if (light_states->pushbutton_fade_current[i] <= 0)
+               {
+                  light_states->pushbutton_fade_up[i] = true;
+                  // Invert direction
+                  light_states->pushbutton_fade_current[i] = 0;
+               }
+
+               // Save new value into DMX frame
+               dmx_frame[i] = light_states->pushbutton_fade_current[i];
             }
          }
 

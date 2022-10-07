@@ -617,6 +617,8 @@ void TCPServer::pushbutton_fade_end_message(std::vector<std::string> split_messa
    }
 
    logger("[TCP] Pushbutton Fade End Command, channel: " + std::to_string(channel), LOG_INFO, true);
+
+   end_pushbutton_fade(channel);
 }
 
 /*
@@ -697,6 +699,9 @@ void TCPServer::pushbutton_fade_start_message(std::vector<std::string> split_mes
       logger("[TCP] Pushbutton Fade Start Command, channel: " + std::to_string(channel) + ", direction: " + (is_direction_up ? "up" : "down"), LOG_INFO, true);
    else
       logger("[TCP] Pushbutton Fade Start Command, channel: " + std::to_string(channel), LOG_INFO, true);
+
+   // Start pushbutton fade
+   start_pushbutton_fade(channel, has_direction, is_direction_up);
 }
 
 void TCPServer::start_on_fade(int channel, bool has_brightness, bool has_transition, int brightness, int transition)
@@ -753,6 +758,47 @@ void TCPServer::start_off_fade(int channel, bool has_transition, int transition)
    light_states_lock->unlock();
 
    logger("[LIGHT] Starting fade, channel: " + std::to_string(channel) + ", start: " + std::to_string(light_states->fade_start[channel]) + ", end: " + std::to_string(light_states->fade_end[channel]) + ", delta: " + std::to_string(light_states->fade_delta[channel]), LOG_INFO, true);
+
+   // Notify persistency writer of change
+   persistency_writer_cv->notify_all();
+}
+
+void TCPServer::start_pushbutton_fade(int channel, bool has_direction, bool is_direction_up)
+{
+   // Acquire lock on light states
+   light_states_lock->lock();
+
+   // If transition was not provided, use default transition
+   if (!has_direction)
+      is_direction_up = !light_states->pushbutton_fade_up[i];
+
+   // Set transition variables
+   light_states->pushbutton_fade[channel] = true;
+   light_states->pushbutton_fade_up[channel] = is_direction_up;
+   light_states->pushbutton_fade_current[channel] = light_states->fade_current[channel];
+
+   // Free lock
+   light_states_lock->unlock();
+
+   logger("[LIGHT] Starting pushbuton fade, channel: " + std::to_string(channel) + ", direction: " + (light_states->pushbutton_fade_up[channel] ? "up" : "down"), LOG_INFO, true);
+}
+
+void TCPServer::end_pushbutton_fade(int channel)
+{
+   // Acquire lock on light states
+   light_states_lock->lock();
+
+   // Set transition variables
+   light_states->pushbutton_fade[channel] = false;
+   light_states->fade_current[channel] = light_states->pushbutton_fade_current[channel];
+
+   // Change outward states
+   light_states->outward_brightness[channel] = light_states->fade_current[channel];
+
+   // Free lock
+   light_states_lock->unlock();
+
+   logger("[LIGHT] Ending pushbuton fade, channel: " + std::to_string(channel) + ", end brightness: " + (light_states->fade_current[channel] ? "up" : "down"), LOG_INFO, true);
 
    // Notify persistency writer of change
    persistency_writer_cv->notify_all();

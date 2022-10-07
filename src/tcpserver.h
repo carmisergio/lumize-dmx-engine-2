@@ -99,4 +99,6 @@ private:
    void pushbutton_fade_start_message(std::vector<std::string> split_message);
    void start_on_fade(int channel, bool has_brightness, bool has_transition, int brightness, int transition);
    void start_off_fade(int channel, bool has_transition, int transition);
+   void start_pushbutton_fade(int channtel, bool has_direction, bool is_direction_up);
+   void end_pushbutton_fade(int channtel);
 };
