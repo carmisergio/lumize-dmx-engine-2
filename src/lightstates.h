@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <chrono>
+
 struct LightStates
 {
    // Outward-facing states
@@ -25,4 +27,6 @@ struct LightStates
    bool pushbutton_fade[512];
    bool pushbutton_fade_up[512];
    double pushbutton_fade_current[512];
+   int pushbutton_fade_pause_counter[512];
+   std::chrono::steady_clock::time_point pushbutton_fade_end_time[512];
 };

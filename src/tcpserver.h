@@ -50,7 +50,7 @@ public:
    void stop();
    void set_light_states(LightStates &light_states, std::timed_mutex &light_states_lock);
    void send_state_update();
-   void configure(int port, int fps, int default_transition);
+   void configure(int port, int fps, int default_transition, int direction_reset_delay);
    void set_persistency_writer_cv(std::condition_variable &persistency_writer_cv);
 
 private:
@@ -80,7 +80,7 @@ private:
    std::condition_variable *persistency_writer_cv;
 
    // Config
-   int port, fps, default_transition;
+   int port, fps, default_transition, direction_reset_delay;
 
    // Internal functions
    void init_client_sockets_array();
@@ -99,6 +99,7 @@ private:
    void pushbutton_fade_start_message(std::vector<std::string> split_message);
    void start_on_fade(int channel, bool has_brightness, bool has_transition, int brightness, int transition);
    void start_off_fade(int channel, bool has_transition, int transition);
-   void start_pushbutton_fade(int channtel, bool has_direction, bool is_direction_up);
-   void end_pushbutton_fade(int channtel);
+   void start_pushbutton_fade(int channel, bool has_direction, bool is_direction_up);
+   void end_pushbutton_fade(int channel);
+   bool get_pushbutton_fade_direction(int channel, bool has_direction, bool is_direction_up);
 };

@@ -160,6 +160,12 @@ void LightRenderer::main_loop()
    }
 }
 
+/*
+ * Interpolates between with sine exponentiation
+ * Parameters:
+ *  - double t: input
+ * Returns: sine interpolation
+ */
 double LightRenderer::ease_in_out_sine(double t)
 {
    return 0.5 * (1 + sin(3.1415926 * (t - 0.5)));

@@ -106,11 +106,12 @@ void TCPServer::set_light_states(LightStates &light_states, std::timed_mutex &li
  *  - int default_transition: Default transition value to apply to fades
  *    without transition specified
  */
-void TCPServer::configure(int port, int fps, int default_transition)
+void TCPServer::configure(int port, int fps, int default_transition, int direction_reset_delay)
 {
    this->port = port;
    this->fps = fps;
    this->default_transition = default_transition;
+   this->direction_reset_delay = direction_reset_delay;
 }
 
 /*
@@ -768,19 +769,43 @@ void TCPServer::start_pushbutton_fade(int channel, bool has_direction, bool is_d
    // Acquire lock on light states
    light_states_lock->lock();
 
-   // If transition was not provided, use default transition
-   if (!has_direction)
-      is_direction_up = !light_states->pushbutton_fade_up[i];
+   if (!light_states->pushbutton_fade[channel])
+   {
+      // Set transition variables
+      light_states->pushbutton_fade[channel] = true;
+      light_states->pushbutton_fade_up[channel] = get_pushbutton_fade_direction(channel, has_direction, is_direction_up);
+      light_states->pushbutton_fade_current[channel] = light_states->fade_current[channel];
+      light_states->pushbutton_fade_pause_counter[channel] = 0;
+      logger("[LIGHT] Starting pushbuton fade, channel: " + std::to_string(channel) + ", direction: " + (light_states->pushbutton_fade_up[channel] ? "up" : "down"), LOG_INFO, true);
+   }
+   else
 
-   // Set transition variables
-   light_states->pushbutton_fade[channel] = true;
-   light_states->pushbutton_fade_up[channel] = is_direction_up;
-   light_states->pushbutton_fade_current[channel] = light_states->fade_current[channel];
+      logger("[LIGHT] Pushbutton fade already started: channel: " + std::to_string(channel) + ", direction: " + (light_states->pushbutton_fade_up[channel] ? "up" : "down"), LOG_INFO, true);
 
    // Free lock
    light_states_lock->unlock();
+}
 
-   logger("[LIGHT] Starting pushbuton fade, channel: " + std::to_string(channel) + ", direction: " + (light_states->pushbutton_fade_up[channel] ? "up" : "down"), LOG_INFO, true);
+bool TCPServer::get_pushbutton_fade_direction(int channel, bool has_direction, bool is_direction_up)
+{
+   // If the message contained a direction, use that
+   if (has_direction)
+      return is_direction_up;
+
+   // Check if last fade was before or after reset delay
+   int seconds_since_last_fade = std::chrono::duration_cast<std::chrono::seconds>(
+                                     std::chrono::steady_clock::now() - light_states->pushbutton_fade_end_time[channel])
+                                     .count();
+   if (seconds_since_last_fade < direction_reset_delay)
+      // Invert last direction
+      return !light_states->pushbutton_fade_up[channel];
+   else
+   // Choose direction based on current brightness
+   {
+      return light_states->fade_current[channel] < 128;
+   }
+
+   return true;
 }
 
 void TCPServer::end_pushbutton_fade(int channel)
@@ -790,6 +815,7 @@ void TCPServer::end_pushbutton_fade(int channel)
 
    // Set transition variables
    light_states->pushbutton_fade[channel] = false;
+   light_states->pushbutton_fade_end_time[channel] = std::chrono::steady_clock::now(); // Store last time fade was ended
    light_states->fade_current[channel] = light_states->pushbutton_fade_current[channel];
 
    // Change outward states
@@ -799,7 +825,7 @@ void TCPServer::end_pushbutton_fade(int channel)
    // Free lock
    light_states_lock->unlock();
 
-   logger("[LIGHT] Ending pushbuton fade, channel: " + std::to_string(channel) + ", end brightness: " + std::to_string(light_states->fade_current[channel]) , LOG_INFO, true);
+   logger("[LIGHT] Ending pushbuton fade, channel: " + std::to_string(channel) + ", end brightness: " + std::to_string(light_states->fade_current[channel]), LOG_INFO, true);
 
    // Notify persistency writer of change
    persistency_writer_cv->notify_all();

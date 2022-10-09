@@ -39,6 +39,8 @@ void setup_light_states(LightStates &light_states)
     light_states.pushbutton_fade[i] = false;
     light_states.pushbutton_fade_up[i] = true;
     light_states.pushbutton_fade_current[i] = 0;
+    light_states.pushbutton_fade_pause_counter[i] = 0;
+    light_states.pushbutton_fade_end_time[i] = std::chrono::steady_clock::now();
   }
 }
 
@@ -72,7 +74,7 @@ int main()
   persistency_writer.set_light_states(light_states, light_states_lock);
 
   // Configure TCPServer and LightRenderer
-  tcp_server.configure(config.port, config.fps, config.default_transition);
+  tcp_server.configure(config.port, config.fps, config.default_transition, config.pushbutton_fade_reset_delay);
   light_renderer.configure(config.fps, config.channels, config.pushbutton_fade_delta);
   persistency_writer.configure(config.persistency_file_path, config.persistency_write_interval);
   set_enable_debug(config.log_debug);
