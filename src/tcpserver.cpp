@@ -794,11 +794,12 @@ void TCPServer::end_pushbutton_fade(int channel)
 
    // Change outward states
    light_states->outward_brightness[channel] = light_states->fade_current[channel];
+   light_states->outward_state[channel] = true;
 
    // Free lock
    light_states_lock->unlock();
 
-   logger("[LIGHT] Ending pushbuton fade, channel: " + std::to_string(channel) + ", end brightness: " + (light_states->fade_current[channel] ? "up" : "down"), LOG_INFO, true);
+   logger("[LIGHT] Ending pushbuton fade, channel: " + std::to_string(channel) + ", end brightness: " + std::to_string(light_states->fade_current[channel]) , LOG_INFO, true);
 
    // Notify persistency writer of change
    persistency_writer_cv->notify_all();
