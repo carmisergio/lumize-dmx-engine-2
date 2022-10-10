@@ -59,11 +59,14 @@ void LightRenderer::set_light_states(LightStates &light_states, std::timed_mutex
  *  - int fps: FPS to render at
  *  - int channels: Amount of channels to output
  */
-void LightRenderer::configure(int fps, int channels, int pushbutton_fade_delta)
+void LightRenderer::configure(int fps, int channels, int pushbutton_fade_delta, int pushbutton_fade_pause)
 {
    this->fps = fps;
    this->channels = channels;
    this->pushbutton_fade_delta_divided = (double)pushbutton_fade_delta / fps;
+   this->pushbutton_fade_pause_frames = pushbutton_fade_pause * fps / 1000;
+
+   std::cout << pushbutton_fade_pause_frames << std::endl;
 
    // Configure DMXSender
    dmx_sender.configure(channels);
@@ -126,9 +129,20 @@ void LightRenderer::main_loop()
                // Check limits
                if (light_states->pushbutton_fade_current[i] >= 255)
                {
+                  // Pause stuff
+                  if (light_states->pushbutton_fade_pause_counter[i] < pushbutton_fade_pause_frames)
+                     light_states->pushbutton_fade_pause_counter[i]++;
+                  else
+                  {
+                     // Invert direction
+                     light_states->pushbutton_fade_up[i] = false;
+
+                     // Reset counter
+                     light_states->pushbutton_fade_pause_counter[i] = 0;
+                  }
+
+                  // Clean up value
                   light_states->pushbutton_fade_current[i] = 255;
-                  // Invert direction
-                  light_states->pushbutton_fade_up[i] = false;
                }
                else if (light_states->pushbutton_fade_current[i] <= 0)
                {

@@ -34,7 +34,7 @@ public:
    bool start();
    void stop();
    void set_light_states(LightStates &light_states, std::timed_mutex &light_states_lock);
-   void configure(int fps, int channels, int pushbutton_fade_delta);
+   void configure(int fps, int channels, int pushbutton_fade_delta, int pushbutton_fade_pause);
 
 private:
    DMXSender dmx_sender;
@@ -48,7 +48,7 @@ private:
    int wait_time;
 
    // Config
-   int fps, channels;
+   int fps, channels, pushbutton_fade_pause_frames;
    double pushbutton_fade_delta_divided;
 
    // Internal functions

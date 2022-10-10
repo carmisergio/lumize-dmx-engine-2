@@ -75,7 +75,7 @@ int main()
 
   // Configure TCPServer and LightRenderer
   tcp_server.configure(config.port, config.fps, config.default_transition, config.pushbutton_fade_reset_delay);
-  light_renderer.configure(config.fps, config.channels, config.pushbutton_fade_delta);
+  light_renderer.configure(config.fps, config.channels, config.pushbutton_fade_delta, config.pushbutton_fade_pause);
   persistency_writer.configure(config.persistency_file_path, config.persistency_write_interval);
   set_enable_debug(config.log_debug);
 
