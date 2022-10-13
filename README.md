@@ -1,24 +1,35 @@
-# Lumize Dmx Engine
+# Lumize Dmx Engine 2
 
-The Lumize Dmx Engine is a piece of software used to enable the use of DMX dimmers in the Smart Home, especially with Home Assistant
+The Lumize Dmx Engine is a lighting controller software that enables network control of DMX dimmers. 
 
 ## Installation
 
-Clone this repository to your local file system
+### Dependencies
+- build-essentials
+- [LibFTDI](https://github.com/lipro/libftdi)
+
+Before building, make sure you have all the necessary dependencies installed.
+
+#### Arch Linux
+```bash
+sudo pacman -Sy base-devel libftdi
+```
+
+### Building
+Clone this repository to your local file system and enter its directory
 
 ```bash
 git clone https://github.com/carmisergio/lumize-dmx-engine-2.git
-```
-cd into the directory
-```bash
 cd lumize-dmx-engine-2
 ```
-Configure build process
-```bash
-./configure.sh
-```
-Build and install
+
+Build the main binary
 ```bash
 make 
+```
+
+### Installing
+Copy binary and all required files into place, register service with systemd
+```bash
 sudo make install
 ```
