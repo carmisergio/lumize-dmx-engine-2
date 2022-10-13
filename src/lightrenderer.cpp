@@ -66,8 +66,6 @@ void LightRenderer::configure(int fps, int channels, int pushbutton_fade_delta, 
    this->pushbutton_fade_delta_divided = (double)pushbutton_fade_delta / fps;
    this->pushbutton_fade_pause_frames = pushbutton_fade_pause * fps / 1000;
 
-   std::cout << pushbutton_fade_pause_frames << std::endl;
-
    // Configure DMXSender
    dmx_sender.configure(channels);
 }

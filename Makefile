@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 # Compiler and linker
 CC = g++ 
 LD = c++ 
@@ -18,6 +20,10 @@ BUILD = build
 
 # name of the program
 EXECUTABLE = lumizedmxengine2
+
+# install stuff
+INSTALL_SCRIPT = installer/install.sh
+UNINSTALL_SCRIPT = installer/uninstall.sh
 
 
 # Main executable target
@@ -75,3 +81,8 @@ clean:
 	@ rm -r -f $(BUILD) $(EXECUTABLE)
 	@ echo "Build files deleted!"
 
+install:
+	@ bash $(INSTALL_SCRIPT)
+
+uninstall:
+	@ bash $(UNINSTALL_SCRIPT)

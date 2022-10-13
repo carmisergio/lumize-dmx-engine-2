@@ -100,8 +100,11 @@ void DMXSender::configure(int channels)
 bool DMXSender::open_ftdi()
 {
   // Open FTDI device
-  if (ftdi_usb_open(ftdi, 0x0403, 0x6001) < 0)
+  int return_code;
+  return_code = ftdi_usb_open(ftdi, 0x0403, 0x6001);
+  if (return_code < 0)
   {
+    std::cout << return_code << std::endl;
     return false;
   }
   return true;

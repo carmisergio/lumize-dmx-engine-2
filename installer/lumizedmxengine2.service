@@ -1,0 +1,10 @@
+[Unit]
+Description=Lumize DMX Engine 2
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/lumizedmxengine2
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
