@@ -36,7 +36,9 @@ Run installation script
 sudo make install
 ```
 
+
 ## Uninstallation
+
 To uninstall, just run
 ```bash
 sudo make uninstall
@@ -45,6 +47,7 @@ sudo make uninstall
 
 
 ## Configuration
+
 The Lumize DMX Engine 2 stores its configuration in `/etc/lumizedmxengine2.conf`
 
 Every line of the configuration file starting with `#` is a comment and will be ignored.
@@ -104,6 +107,13 @@ enable_persistency = true
 ### Enable debug logging
 # log_debug = false
 ```
+
+
+
+## TCP protocol definition
+
+The Lumize DMX Engine 2 is controlled via a custom TCP protocol. By default
+
 
 
 
