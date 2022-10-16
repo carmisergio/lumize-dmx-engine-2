@@ -7,7 +7,7 @@ CC = g++
 #  -g    adds debugging information to the executable file
 #  -c compiles to object files
 #  -Wall turns on most, but not all, compiler warnings
-CFLAGS  = -g -c -Wall
+CFLAGS  = -g -c -Wall -std=c++11 -pthread
 LFLAGS  = -g -Wall
 
 # linking information:
