@@ -104,7 +104,6 @@ bool DMXSender::open_ftdi()
   return_code = ftdi_usb_open(ftdi, 0x0403, 0x6001);
   if (return_code < 0)
   {
-    std::cout << return_code << std::endl;
     return false;
   }
   return true;

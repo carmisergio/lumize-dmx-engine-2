@@ -17,6 +17,13 @@ Before building, make sure you have all the necessary dependencies installed.
 sudo pacman -Sy base-devel libftdi
 ```
 
+#### Debian/Rasperry Pi OS
+
+```bash
+sudo apt-get update
+sudo apt-get install build-essentials libftdi1 libftdi1-dev
+```
+
 ### Building
 
 Clone this repository to your local file system and enter its directory

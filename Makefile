@@ -2,13 +2,13 @@ SHELL := /bin/bash
 
 # Compiler and linker
 CC = g++ 
-LD = c++ 
 
 # compiler flags:
 #  -g    adds debugging information to the executable file
 #  -c compiles to object files
 #  -Wall turns on most, but not all, compiler warnings
 CFLAGS  = -g -c -Wall
+LFLAGS  = -g -Wall
 
 # linking information:
 #  --libs libftdi
@@ -30,7 +30,7 @@ UNINSTALL_SCRIPT = installer/uninstall.sh
 $(EXECUTABLE): $(BUILD)/main.o $(BUILD)/dmxsender.o $(BUILD)/tcpserver.o $(BUILD)/lightrenderer.o $(BUILD)/logger.o $(BUILD)/configreader.o $(BUILD)/persistency.o
 	@ echo "Linking main executable..."
 	@ mkdir -p $(BUILD)
-	@ $(LD) -o $(EXECUTABLE) $(PKG_CONFIG) $(BUILD)/main.o $(BUILD)/dmxsender.o $(BUILD)/tcpserver.o $(BUILD)/lightrenderer.o $(BUILD)/logger.o $(BUILD)/configreader.o $(BUILD)/persistency.o
+	@ $(CC) $(LFLAGS) $(PKG_CONFIG) -o $(EXECUTABLE) $(BUILD)/main.o $(BUILD)/dmxsender.o $(BUILD)/tcpserver.o $(BUILD)/lightrenderer.o $(BUILD)/logger.o $(BUILD)/configreader.o $(BUILD)/persistency.o
 	@ echo "Build complete!"
 
 $(BUILD)/main.o: $(SRC)/main.cpp
