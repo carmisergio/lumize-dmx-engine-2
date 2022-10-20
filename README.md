@@ -21,7 +21,7 @@ sudo pacman -Sy base-devel libftdi
 
 ```bash
 sudo apt-get update
-sudo apt-get install build-essentials libftdi1 libftdi1-dev
+sudo apt-get install build-essential libftdi1-dev
 ```
 
 ### Building
@@ -252,3 +252,6 @@ sres,0-255,1-100,0-150
 ```
 
 This is the status update response for 3 channels. The first channel is off and se to 255 brightness, the second is on and set to 100 and the third is off and set to 150.
+
+echo "blacklist module_name" >> /etc/modprobe.d/local-dontload.conf
+echo "install module_name /bin/false" >> /etc/modprobe.d/local-dontload.conf

@@ -8,7 +8,7 @@ CC = g++
 #  -c compiles to object files
 #  -Wall turns on most, but not all, compiler warnings
 CFLAGS  = -g -c -Wall -std=c++11 -pthread
-LFLAGS  = -g -Wall
+LFLAGS  = -g -Wall -std=c++11 -pthread
 
 # linking information:
 #  --libs libftdi
@@ -30,7 +30,7 @@ UNINSTALL_SCRIPT = installer/uninstall.sh
 $(EXECUTABLE): $(BUILD)/main.o $(BUILD)/dmxsender.o $(BUILD)/tcpserver.o $(BUILD)/lightrenderer.o $(BUILD)/logger.o $(BUILD)/configreader.o $(BUILD)/persistency.o
 	@ echo "Linking main executable..."
 	@ mkdir -p $(BUILD)
-	@ $(CC) $(LFLAGS) $(PKG_CONFIG) -o $(EXECUTABLE) $(BUILD)/main.o $(BUILD)/dmxsender.o $(BUILD)/tcpserver.o $(BUILD)/lightrenderer.o $(BUILD)/logger.o $(BUILD)/configreader.o $(BUILD)/persistency.o
+	@ $(CC) $(LFLAGS) -o $(EXECUTABLE) $(BUILD)/main.o $(BUILD)/dmxsender.o $(BUILD)/tcpserver.o $(BUILD)/lightrenderer.o $(BUILD)/logger.o $(BUILD)/configreader.o $(BUILD)/persistency.o $(PKG_CONFIG)
 	@ echo "Build complete!"
 
 $(BUILD)/main.o: $(SRC)/main.cpp
