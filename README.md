@@ -47,6 +47,12 @@ Run installation script
 sudo make install
 ```
 
+Reboot the system for the ftdi_sio module to be unloaded
+
+```bash
+sudo reboot
+```
+
 ## Uninstallation
 
 To uninstall, just run
