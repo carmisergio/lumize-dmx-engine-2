@@ -1,11 +1,11 @@
 [Unit]
 Description=Lumize DMX Engine 2
+After=local-fs.target
 
 [Service]
 Type=simple
 ExecStart=/usr/bin/lumizedmxengine2
 Restart=on-failure
-After=local-fs.target
 
 [Install]
 WantedBy=multi-user.target
