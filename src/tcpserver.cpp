@@ -333,15 +333,15 @@ void TCPServer::parse_message(std::string message, int client_fd)
 
    // Recognize commands
    if (command == "sreq")
-      status_request_message(client_fd);
+      status_request_message(message_split, client_fd);
    else if (command == "off")
-      turn_off_message(message_split);
+      turn_off_message(message_split, client_fd);
    else if (command == "on")
-      turn_on_message(message_split);
+      turn_on_message(message_split, client_fd);
    else if (command == "pfstart")
-      pushbutton_fade_start_message(message_split);
+      pushbutton_fade_start_message(message_split, client_fd);
    else if (command == "pfend")
-      pushbutton_fade_end_message(message_split);
+      pushbutton_fade_end_message(message_split, client_fd);
    else
       logger("[TCP] Received: Unknown message type", LOG_WARN, true);
 }
@@ -371,22 +371,55 @@ std::vector<std::string> TCPServer::split_string(std::string input, char seperat
  * parameters:
  *  - int client_fd: client socket file descriptor
  */
-void TCPServer::status_request_message(int client_fd)
+void TCPServer::status_request_message(std::vector<std::string> split_message, int client_fd)
 {
-   logger("[TCP] Received: Status request message", LOG_INFO, true);
+   int channel;
+
+   // Check if there are is at least space for the required fields
+   if (split_message.size() < 2)
+   {
+      logger("[TCP] Status Request message, no channel given!", LOG_WARN, true);
+      return;
+   }
+
+   // Convert channel number string to int
+   try
+   {
+      channel = std::stoi(split_message[1]);
+
+      // Check that channel value is acceptable
+      if (channel < 0 || channel > 511)
+      {
+         logger("[TCP] Status Request message, channel number out of range!", LOG_WARN, true);
+         return;
+      }
+   }
+   catch (const std::exception &e)
+   {
+      logger("[TCP] Status Request message, bad channel!", LOG_WARN, true);
+      return;
+      return;
+   }
+
    std::string message;
 
    // Start with response message type
    message.append("sres");
+   message.append(",");
+   message.append(std::to_string(channel));
+   message.append(",");
+   message.append(std::to_string(light_states->outward_state[i]));
+   message.append("-");
+   message.append(std::to_string(light_states->outward_brightness[i]));
 
-   // Append all statuses
-   for (int i = 0; i < 512; i++)
-   {
-      message.append(",");
-      message.append(std::to_string(light_states->outward_state[i]));
-      message.append("-");
-      message.append(std::to_string(light_states->outward_brightness[i]));
-   }
+   // // Append all statuses
+   // for (int i = 0; i < 512; i++)
+   // {
+   //    message.append(",");
+   //    message.append(std::to_string(light_states->outward_state[i]));
+   //    message.append("-");
+   //    message.append(std::to_string(light_states->outward_brightness[i]));
+   // }
    message.append("\n");
 
    send_string(client_fd, message);
@@ -397,7 +430,7 @@ void TCPServer::status_request_message(int client_fd)
  * parameters:
  *  - std::vector<std::string> split_message: complete message to get parameters
  */
-void TCPServer::turn_off_message(std::vector<std::string> split_message)
+void TCPServer::turn_off_message(std::vector<std::string> split_message, int client_fd)
 {
    bool has_transition = false;
    int channel, transition;
@@ -406,6 +439,8 @@ void TCPServer::turn_off_message(std::vector<std::string> split_message)
    if (split_message.size() < 2)
    {
       logger("[TCP] OFF Command, no channel given!", LOG_WARN, true);
+      // Send error message to client
+      send_string(client_fd, "ERROR_NO_CHANNEL_GIVEN\n");
       return;
    }
 
@@ -418,13 +453,16 @@ void TCPServer::turn_off_message(std::vector<std::string> split_message)
       if (channel < 0 || channel > 511)
       {
          logger("[TCP] OFF Command, channel number out of range!", LOG_WARN, true);
+         // Send error message to client
+         send_string(client_fd, "ERROR_CHANNEL_OUT_OF_RANGE\n");
          return;
       }
    }
    catch (const std::exception &e)
    {
       logger("[TCP] OFF Command, bad channel!", LOG_WARN, true);
-      return;
+      // Send error message to client
+      send_string(client_fd, "ERROR_BAD_CHANNEL\n");
       return;
    }
 
@@ -448,12 +486,16 @@ void TCPServer::turn_off_message(std::vector<std::string> split_message)
                if (transition < 0)
                {
                   logger("[TCP] OFF Command, transition value out of range!", LOG_WARN, true);
+                  // Send error message to client
+                  send_string(client_fd, "ERROR_TRANSITION_OUT_OF_RANGE\n");
                   return;
                }
             }
             catch (const std::exception &e)
             {
                logger("[TCP] OFF Command, bad transition!", LOG_WARN, true);
+               // Send error message to client
+               send_string(client_fd, "ERROR_BAD_TRANSITION\n");
                return;
             }
             has_transition = true;
@@ -467,6 +509,9 @@ void TCPServer::turn_off_message(std::vector<std::string> split_message)
    else
       logger("[TCP] OFF Command, channel: " + std::to_string(channel), LOG_INFO, true);
 
+   // Send OK message to client
+   send_string(client_fd, "OK\n");
+
    // Perform turn off fade
    start_off_fade(channel, has_transition, transition);
 }
@@ -476,7 +521,7 @@ void TCPServer::turn_off_message(std::vector<std::string> split_message)
  * parameters:
  *  - std::vector<std::string> split_message: complete message to get parameters
  */
-void TCPServer::turn_on_message(std::vector<std::string> split_message)
+void TCPServer::turn_on_message(std::vector<std::string> split_message, int client_fd)
 {
    bool has_transition = false, has_brightness = false;
    int channel, transition, brightness;
@@ -485,6 +530,8 @@ void TCPServer::turn_on_message(std::vector<std::string> split_message)
    if (split_message.size() < 2)
    {
       logger("[TCP] ON Command, no channel given!", LOG_WARN, true);
+      // Send error message to client
+      send_string(client_fd, "ERROR_NO_CHANNEL_GIVEN\n");
       return;
    }
 
@@ -497,12 +544,16 @@ void TCPServer::turn_on_message(std::vector<std::string> split_message)
       if (channel < 0 || channel > 511)
       {
          logger("[TCP] ON Command, channel number out of range!", LOG_WARN, true);
+         // Send error message to client
+         send_string(client_fd, "ERROR_CHANNEL_OUT_OF_RANGE\n");
          return;
       }
    }
    catch (const std::exception &e)
    {
       logger("[TCP] ON Command, bad channel!", LOG_WARN, true);
+      // Send error message to client
+      send_string(client_fd, "ERROR_BAD_CHANNEL\n");
       return;
    }
 
@@ -527,12 +578,16 @@ void TCPServer::turn_on_message(std::vector<std::string> split_message)
                if (brightness < 0 || brightness > 255)
                {
                   logger("[TCP] ON Command, brightness value out of range!", LOG_WARN, true);
+                  // Send error message to client
+                  send_string(client_fd, "ERROR_BRIGHTNESS_OUT_OF_RANGE\n");
                   return;
                }
             }
             catch (const std::exception &e)
             {
                logger("[TCP] ON Command, bad brightness!", LOG_WARN, true);
+               // Send error message to client
+               send_string(client_fd, "ERROR_BAD_BRIGHTNESS\n");
                return;
             }
             has_brightness = true;
@@ -552,12 +607,16 @@ void TCPServer::turn_on_message(std::vector<std::string> split_message)
                if (transition < 0)
                {
                   logger("[TCP] ON Command, transition value out of range!", LOG_WARN, true);
+                  // Send error message to client
+                  send_string(client_fd, "ERROR_TRANSITION_OUT_OF_RANGE\n");
                   return;
                }
             }
             catch (const std::exception &e)
             {
                logger("[TCP] ON Command, bad transition!", LOG_WARN, true);
+               // Send error message to client
+               send_string(client_fd, "ERROR_BAD_TRANSITION\n");
                return;
             }
             has_transition = true;
@@ -580,6 +639,9 @@ void TCPServer::turn_on_message(std::vector<std::string> split_message)
          logger("[TCP] ON Command, channel: " + std::to_string(channel), LOG_INFO, true);
    }
 
+   // Send OK message to client
+   send_string(client_fd, "OK\n");
+
    start_on_fade(channel, has_brightness, has_transition, brightness, transition);
 }
 
@@ -588,7 +650,7 @@ void TCPServer::turn_on_message(std::vector<std::string> split_message)
  * parameters:
  *  - std::vector<std::string> split_message: complete message to get parameters
  */
-void TCPServer::pushbutton_fade_end_message(std::vector<std::string> split_message)
+void TCPServer::pushbutton_fade_end_message(std::vector<std::string> split_message, int client_fd)
 {
    int channel;
 
@@ -596,6 +658,8 @@ void TCPServer::pushbutton_fade_end_message(std::vector<std::string> split_messa
    if (split_message.size() < 2)
    {
       logger("[TCP] Pushbutton Fade End Command, no channel given!", LOG_WARN, true);
+      // Send error message to client
+      send_string(client_fd, "ERROR_NO_CHANNEL_GIVEN\n");
       return;
    }
 
@@ -608,16 +672,23 @@ void TCPServer::pushbutton_fade_end_message(std::vector<std::string> split_messa
       if (channel < 0 || channel > 511)
       {
          logger("[TCP] Pushbutton Fade End Command, channel number out of range!", LOG_WARN, true);
+         // Send error message to client
+         send_string(client_fd, "ERROR_CHANNEL_OUT_OF_RANGE\n");
          return;
       }
    }
    catch (const std::exception &e)
    {
       logger("[TCP] Pushbutton Fade End Command, bad channel!", LOG_WARN, true);
+      // Send error message to client
+      send_string(client_fd, "ERROR_BAD_CHANNEL\n");
       return;
    }
 
    logger("[TCP] Pushbutton Fade End Command, channel: " + std::to_string(channel), LOG_INFO, true);
+
+   // Send OK message to client
+   send_string(client_fd, "OK\n");
 
    end_pushbutton_fade(channel);
 }
@@ -627,7 +698,7 @@ void TCPServer::pushbutton_fade_end_message(std::vector<std::string> split_messa
  * parameters:
  *  - std::vector<std::string> split_message: complete message to get parameters
  */
-void TCPServer::pushbutton_fade_start_message(std::vector<std::string> split_message)
+void TCPServer::pushbutton_fade_start_message(std::vector<std::string> split_message, int client_fd)
 {
    bool has_direction = false;
    int channel, tmp_direction;
@@ -637,6 +708,8 @@ void TCPServer::pushbutton_fade_start_message(std::vector<std::string> split_mes
    if (split_message.size() < 2)
    {
       logger("[TCP] Pushbutton Fade Start Command, no channel given!", LOG_WARN, true);
+      // Send else message to client
+      send_string(client_fd, "ERROR_NO_CHANNEL_GIVEN\n");
       return;
    }
 
@@ -649,13 +722,16 @@ void TCPServer::pushbutton_fade_start_message(std::vector<std::string> split_mes
       if (channel < 0 || channel > 511)
       {
          logger("[TCP] Pushbutton Fade Start Command, channel number out of range!", LOG_WARN, true);
+         // Send else message to client
+         send_string(client_fd, "ERROR_CHANNEL_OUT_OF_RANGE\n");
          return;
       }
    }
    catch (const std::exception &e)
    {
       logger("[TCP] Pushbutton Fade Start Command, bad channel!", LOG_WARN, true);
-      return;
+      // Send else message to client
+      send_string(client_fd, "ERROR_BAD_CHANNEL\n");
       return;
    }
 
@@ -683,12 +759,16 @@ void TCPServer::pushbutton_fade_start_message(std::vector<std::string> split_mes
                else
                {
                   logger("[TCP] Pushbutton Fade Start Command, direction value can only be 0 or 1!", LOG_WARN, true);
+                  // Send else message to client
+                  send_string(client_fd, "ERROR_DIRECTION_NOT_VALID\n");
                   return;
                }
             }
             catch (const std::exception &e)
             {
                logger("[TCP] Pushbutton Fade Start Command, bad direction!", LOG_WARN, true);
+               // Send else message to client
+               send_string(client_fd, "ERROR_BAD_DIRECTION\n");
                return;
             }
             has_direction = true;
@@ -700,6 +780,9 @@ void TCPServer::pushbutton_fade_start_message(std::vector<std::string> split_mes
       logger("[TCP] Pushbutton Fade Start Command, channel: " + std::to_string(channel) + ", direction: " + (is_direction_up ? "up" : "down"), LOG_INFO, true);
    else
       logger("[TCP] Pushbutton Fade Start Command, channel: " + std::to_string(channel), LOG_INFO, true);
+
+   // Send OK message to client
+   send_string(client_fd, "OK\n");
 
    // Start pushbutton fade
    start_pushbutton_fade(channel, has_direction, is_direction_up);

@@ -92,11 +92,11 @@ private:
    void handle_action_from_client(int socketfd, int i);
    void parse_message(std::string message, int client_fd);
    std::vector<std::string> split_string(std::string input, char seperator);
-   void status_request_message(int client_fd);
-   void turn_off_message(std::vector<std::string> split_message);
-   void turn_on_message(std::vector<std::string> split_message);
-   void pushbutton_fade_end_message(std::vector<std::string> split_message);
-   void pushbutton_fade_start_message(std::vector<std::string> split_message);
+   void status_request_message(std::vector<std::string> split_message, int client_fd);
+   void turn_off_message(std::vector<std::string> split_message, int client_fd);
+   void turn_on_message(std::vector<std::string> split_message, int client_fd);
+   void pushbutton_fade_end_message(std::vector<std::string> split_message, int client_fd);
+   void pushbutton_fade_start_message(std::vector<std::string> split_message, int client_fd);
    void start_on_fade(int channel, bool has_brightness, bool has_transition, int brightness, int transition);
    void start_off_fade(int channel, bool has_transition, int transition);
    void start_pushbutton_fade(int channel, bool has_direction, bool is_direction_up);
