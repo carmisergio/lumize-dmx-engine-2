@@ -332,7 +332,9 @@ void TCPServer::parse_message(std::string message, int client_fd)
    std::string command = message_split[0];
 
    // Recognize commands
-   if (command == "sreq")
+   if (command == "conncheck")
+      connection_check_message(client_fd);
+   else if (command == "sreq")
       status_request_message(message_split, client_fd);
    else if (command == "off")
       turn_off_message(message_split, client_fd);
@@ -368,6 +370,20 @@ std::vector<std::string> TCPServer::split_string(std::string input, char seperat
       output.push_back(section);
 
    return output;
+}
+
+/*
+ * Handles a connection check message from the client and sends correct response
+ * parameters:
+ *  - int client_fd: client socket file descriptor
+ */
+void TCPServer::connection_check_message(int client_fd)
+{
+   logger("[TCP] Connection Check message", LOG_INFO, true);
+
+   // Send OK message to client
+   send_string(client_fd, "ok\n");
+   return;
 }
 
 /*

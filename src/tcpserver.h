@@ -82,6 +82,8 @@ private:
    // Config
    int port, fps, default_transition, direction_reset_delay;
 
+   std::vector<std::string> split_string(std::string input, char seperator);
+
    // Internal functions
    void init_client_sockets_array();
    void main_loop();
@@ -91,7 +93,7 @@ private:
    bool add_client_to_client_sockets(int socketfd);
    void handle_action_from_client(int socketfd, int i);
    void parse_message(std::string message, int client_fd);
-   std::vector<std::string> split_string(std::string input, char seperator);
+   void connection_check_message(int client_fd);
    void status_request_message(std::vector<std::string> split_message, int client_fd);
    void turn_off_message(std::vector<std::string> split_message, int client_fd);
    void turn_on_message(std::vector<std::string> split_message, int client_fd);
