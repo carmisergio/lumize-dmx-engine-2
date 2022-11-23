@@ -242,6 +242,7 @@ void TCPServer::accept_connection()
  */
 bool TCPServer::send_string(int socketfd, std::string message)
 {
+
    // Convert string to char array
    const char *message_char = message.c_str();
 
@@ -429,14 +430,18 @@ void TCPServer::status_request_message(std::vector<std::string> split_message, i
 
    std::string message;
 
+   // light_states_lock->lock();
+
    // Start with response message type
    message.append("sres");
    message.append(",");
    message.append(std::to_string(channel));
    message.append(",");
-   message.append(std::to_string(light_states->outward_state[i]));
+   message.append(std::to_string(light_states->outward_state[channel]));
    message.append("-");
-   message.append(std::to_string(light_states->outward_brightness[i]));
+   message.append(std::to_string(light_states->outward_brightness[channel]));
+
+   // light_states_lock->unlock();
 
    // // Append all statuses
    // for (int i = 0; i < 512; i++)
@@ -449,6 +454,8 @@ void TCPServer::status_request_message(std::vector<std::string> split_message, i
    message.append("\n");
 
    send_string(client_fd, message);
+
+   logger("[TCP] Status Request message, channel: " + std::to_string(channel), LOG_INFO, true);
 }
 
 /*
@@ -535,11 +542,11 @@ void TCPServer::turn_off_message(std::vector<std::string> split_message, int cli
    else
       logger("[TCP] OFF Command, channel: " + std::to_string(channel), LOG_INFO, true);
 
-   // Send OK message to client
-   send_string(client_fd, "ok\n");
-
    // Perform turn off fade
    start_off_fade(channel, has_transition, transition);
+
+   // Send OK message to client
+   send_string(client_fd, "ok\n");
 }
 
 /*
@@ -665,10 +672,10 @@ void TCPServer::turn_on_message(std::vector<std::string> split_message, int clie
          logger("[TCP] ON Command, channel: " + std::to_string(channel), LOG_INFO, true);
    }
 
+   start_on_fade(channel, has_brightness, has_transition, brightness, transition);
+
    // Send OK message to client
    send_string(client_fd, "ok\n");
-
-   start_on_fade(channel, has_brightness, has_transition, brightness, transition);
 }
 
 /*
@@ -713,10 +720,10 @@ void TCPServer::pushbutton_fade_end_message(std::vector<std::string> split_messa
 
    logger("[TCP] Pushbutton Fade End Command, channel: " + std::to_string(channel), LOG_INFO, true);
 
+   end_pushbutton_fade(channel);
+
    // Send OK message to client
    send_string(client_fd, "ok\n");
-
-   end_pushbutton_fade(channel);
 }
 
 /*
@@ -807,11 +814,11 @@ void TCPServer::pushbutton_fade_start_message(std::vector<std::string> split_mes
    else
       logger("[TCP] Pushbutton Fade Start Command, channel: " + std::to_string(channel), LOG_INFO, true);
 
-   // Send OK message to client
-   send_string(client_fd, "ok\n");
-
    // Start pushbutton fade
    start_pushbutton_fade(channel, has_direction, is_direction_up);
+
+   // Send OK message to client
+   send_string(client_fd, "ok\n");
 }
 
 void TCPServer::start_on_fade(int channel, bool has_brightness, bool has_transition, int brightness, int transition)
