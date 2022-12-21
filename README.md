@@ -237,27 +237,37 @@ This command will start a pushbutton fade on channel 0 in the downwards directio
 
 #### Light States Update Request
 
-Request a ligh state update from the Engine.
+Request a light state update from the Engine.
 
 ```
-sreq
+sreq,[channel]
 ```
 
 Response:
 
 ```
-sres,[state0]-[brightness0],[state1]-[brightness1],...
+sres,[channel],[state]-[brightness]
 ```
 
-The state of the number of channels in configuration is represented sequentially.
-
-Full response example:
+Response examples:
 
 ```
-sres,0-255,1-100,0-150
+sres,0,0-255
+sres,0,1-200
+sres,20,0-150
 ```
 
-This is the status update response for 3 channels. The first channel is off and se to 255 brightness, the second is on and set to 100 and the third is off and set to 150.
+## Troubleshooting
 
-echo "blacklist module_name" >> /etc/modprobe.d/local-dontload.conf
-echo "install module_name /bin/false" >> /etc/modprobe.d/local-dontload.conf
+### The Engine can't communicate with FTDI chip
+
+For libftdi to work correctly, the default `ftdi_sio` driver which is automatically loaded when a new FTDI chip is connected to enable COM emulation has to be disabled.
+
+Prevent the `ftdi_sio` driver from loading:
+
+```bash
+echo "blacklist ftdi_sio" >> /etc/modprobe.d/local-dontload.conf
+echo "install ftdi_sio /bin/false" >> /etc/modprobe.d/local-dontload.conf
+```
+
+ATTENTION: This procedure will affect all FTDI chips connected to the machine, as they will no longer appear as COM ports. If you require for other FTDIs to work as COMs, you will have to disable the loading of `ftdi_sio` driver with a udev rule specific for the device.
