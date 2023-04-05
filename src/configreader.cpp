@@ -51,6 +51,18 @@ std::string humanize_bool(bool input)
     return "false";
 }
 
+std::string recap_brightness_limits(std::array<BrightnessLimits, 512> brightness_limits, int channels)
+{
+  std::string output = "";
+
+  for (int i = 0; i < channels; i++)
+  {
+    output.append(std::to_string(brightness_limits[i].min) + "-" + std::to_string(brightness_limits[i].max) + ", ");
+  }
+
+  return output;
+}
+
 /*
  * Prints to console a recap of the config
  * Parameters:
@@ -62,6 +74,7 @@ void recap_config(LumizeConfig &config)
   logger("         Port: " + std::to_string(config.port), LOG_INFO, false);
   logger("         Channels: " + std::to_string(config.channels), LOG_INFO, false);
   logger("         FPS: " + std::to_string(config.fps), LOG_INFO, false);
+  logger("         Brighness limits: " + recap_brightness_limits(config.brightness_limits, config.channels), LOG_INFO, false);
   logger("         Default transition: " + std::to_string(config.default_transition) + "ms", LOG_INFO, false);
   logger("         Pushbutton fade delta: " + std::to_string(config.pushbutton_fade_delta), LOG_INFO, false);
   logger("         Pushbutton fade pause: " + std::to_string(config.pushbutton_fade_pause), LOG_INFO, false);
@@ -218,6 +231,116 @@ bool parse_default_transition_value(LumizeConfig &config, std::string &value_str
 
   // Set config parameter
   config.default_transition = tmp_default_transition;
+
+  return true;
+}
+
+/*
+ * Parse "brightness_limits" config parameter
+ * Parameters:
+ *  - LumizeConfig &config: config struct to update
+ *  - std::string &value_string: reference to input string
+ * Returns: true if parameter was correct
+ */
+bool parse_brightness_limits_value(LumizeConfig &config, std::string &value_string)
+{
+  // Divide into settings
+  std::vector<std::string> settings = configreader_split_string(value_string, ',');
+
+  bool already_set[512];
+
+  for (int i = 0; i < 512; i++)
+  {
+    already_set[i] = false;
+  }
+
+  // Iterate over each setting
+  for (unsigned int i = 0; i < settings.size(); i++)
+  {
+    // Get each value from settings
+    std::vector<std::string> settings_split = configreader_split_string(settings[i], '-');
+
+    if (settings_split.size() != 3)
+    {
+      logger("[CONFIG] Error parsing parameter \"brightness_limits\": values must be in format channel-minimum-maximum", LOG_ERR, false);
+      return false;
+    }
+
+    // Parse channel value
+    int tmp_channel;
+
+    // Check that string contains a number
+    if (!isNumber(settings_split[0]))
+    {
+      logger("[CONFIG] Error parsing parameter \"brightness_limits\": channel value is not a number!", LOG_ERR, false);
+      return false;
+    }
+
+    // Convert from string to int
+    tmp_channel = std::stoi(settings_split[0]);
+
+    if (tmp_channel < 0 || tmp_channel > 511)
+    {
+      logger("[CONFIG] Error parsing parameter \"brightness_limits\": channel alue must be between 0 and 511!", LOG_ERR, false);
+      return false;
+    }
+
+    // Parse minimum brightness value
+    int tmp_min_brightness;
+
+    // Check that string contains a number
+    if (!isNumber(settings_split[1]))
+    {
+      logger("[CONFIG] Error parsing parameter \"brightness_limits\": minimum brightness value is not a number!", LOG_ERR, false);
+      return false;
+    }
+
+    // Convert from string to int
+    tmp_min_brightness = std::stoi(settings_split[1]);
+
+    if (tmp_min_brightness < 0 || tmp_min_brightness > 255)
+    {
+      logger("[CONFIG] Error parsing parameter \"brightness_limits\": minimum brightness value must be between 0 and 255!", LOG_ERR, false);
+      return false;
+    }
+
+    // Parse maximum brightness value
+    int tmp_max_brightness;
+
+    // Check that string contains a number
+    if (!isNumber(settings_split[2]))
+    {
+      logger("[CONFIG] Error parsing parameter \"brightness_limits\": maximum brightness value is not a number!", LOG_ERR, false);
+      return false;
+    }
+
+    // Convert from string to int
+    tmp_max_brightness = std::stoi(settings_split[2]);
+
+    if (tmp_max_brightness < 0 || tmp_max_brightness > 255)
+    {
+      logger("[CONFIG] Error parsing parameter \"brightness_limits\": maximum brightness value must be between 0 and 255!", LOG_ERR, false);
+      return false;
+    }
+
+    if (tmp_max_brightness < tmp_min_brightness)
+    {
+      logger("[CONFIG] Error parsing parameter \"brightness_limits\": maximum brightness value must be between 0 and 255!", LOG_ERR, false);
+      return false;
+    }
+
+    if (already_set[tmp_channel])
+    {
+      logger("[CONFIG] Error parsing parameter \"brightness_limits\": Channel values can be set only once!", LOG_ERR, false);
+      return false;
+    }
+
+    // Set values in brightness limits array
+    config.brightness_limits[tmp_channel].min = tmp_min_brightness;
+    config.brightness_limits[tmp_channel].max = tmp_max_brightness;
+
+    already_set[tmp_channel] = true;
+  }
 
   return true;
 }
@@ -442,6 +565,20 @@ bool parse_log_debug_value(LumizeConfig &config, std::string &value_string)
 }
 
 /*
+ * Sets up brightness limits values
+ * Parameters:
+ *  LumizeConfig &config: config object
+ */
+void setup_brightness_limits(LumizeConfig &config)
+{
+  for (unsigned int i = 0; i < config.brightness_limits.size(); i++)
+  {
+    config.brightness_limits[i].min = DEFAULT_MIN_BRIGHTNESS;
+    config.brightness_limits[i].max = DEFAULT_MAX_BRIGHTNESS;
+  }
+}
+
+/*
  * Reads from configuration file and saves the parameters in LumizeConfig struct
  * Parameters:
  *  - LumizeConfig &config: reference to the LumizeConfig struct to save into
@@ -452,6 +589,9 @@ bool read_config(LumizeConfig &config)
   std::string line;
   std::vector<std::string> string_split;
   std::ifstream file(CONFIG_FILE_PATH);
+
+  // Initialize brightness limits
+  setup_brightness_limits(config);
 
   // Check that file opened succesfully
   if (file.is_open())
@@ -491,6 +631,11 @@ bool read_config(LumizeConfig &config)
           else if (string_split[0] == CONFIG_OPTION_DEFAULT_TRANSITION)
           {
             if (!parse_default_transition_value(config, string_split[1]))
+              return false;
+          }
+          else if (string_split[0] == CONFIG_OPTION_BRIGHTNESS_LIMITS)
+          {
+            if (!parse_brightness_limits_value(config, string_split[1]))
               return false;
           }
           else if (string_split[0] == CONFIG_OPTION_PUSHBUTTON_FADE_DELTA)

@@ -13,6 +13,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <array>
 #include <sstream>
 
 #include "./logger.h"
@@ -38,6 +39,7 @@
 #define CONFIG_OPTION_CHANNELS "channels"
 #define CONFIG_OPTION_FPS "fps"
 #define CONFIG_OPTION_DEFAULT_TRANSITION "default_transition"
+#define CONFIG_OPTION_BRIGHTNESS_LIMITS "brightness_limits"
 #define CONFIG_OPTION_PUSHBUTTON_FADE_DELTA "pushbutton_fade_delta"
 #define CONFIG_OPTION_PUSHBUTTON_FADE_PAUSE "pushbutton_fade_pause"
 #define CONFIG_OPTION_PUSHBUTTON_FADE_RESET_DELAY "pushbutton_fade_reset_delay"
@@ -46,6 +48,17 @@
 #define CONFIG_OPTION_PERSISTENCY_WRITE_INTERVAL "persistency_write_interval"
 #define CONFIG_OPTION_LOG_DEBUG "log_debug"
 
+// Default minimum and maximum value for all lights
+#define DEFAULT_MIN_BRIGHTNESS 0
+#define DEFAULT_MAX_BRIGHTNESS 255
+
+// Brighness limits for single channel
+struct BrightnessLimits
+{
+   int min;
+   int max;
+};
+
 // Struct that will hold the config
 struct LumizeConfig
 {
@@ -53,6 +66,7 @@ struct LumizeConfig
    int channels = DEFAULT_CONFIG_CHANNELS;
    int fps = DEFAULT_CONFIG_FPS;
    int default_transition = DEFAULT_CONFIG_DEFAULT_TRANSITION;
+   std::array<BrightnessLimits, 512> brightness_limits;
    int pushbutton_fade_delta = DEFAULT_CONFIG_PUSHBUTTON_FADE_DELTA;
    int pushbutton_fade_pause = DEFAULT_CONFIG_PUSHBUTTON_FADE_PAUSE;
    int pushbutton_fade_reset_delay = DEFAULT_CONFIG_PUSHBUTTON_FADE_RESET_DELAY;

@@ -57,14 +57,16 @@ void LightRenderer::set_light_states(LightStates &light_states, std::timed_mutex
  * Configure the light renderer
  * Parameters:
  *  - int fps: FPS to render at
+ *  - BrightnessLimits brightness_limits: brightness limits of all lights
  *  - int channels: Amount of channels to output
  */
-void LightRenderer::configure(int fps, int channels, int pushbutton_fade_delta, int pushbutton_fade_pause)
+void LightRenderer::configure(int fps, int channels, std::array<BrightnessLimits, 512> *brightness_limits, int pushbutton_fade_delta, int pushbutton_fade_pause)
 {
    this->fps = fps;
    this->channels = channels;
    this->pushbutton_fade_delta_divided = (double)pushbutton_fade_delta / fps;
    this->pushbutton_fade_pause_frames = pushbutton_fade_pause * fps / 1000;
+   this->brightness_limits = brightness_limits;
 
    // Configure DMXSender
    dmx_sender.configure(channels);
@@ -90,9 +92,11 @@ void LightRenderer::main_loop()
          // If we were able to acquire the lock, compute new frame
          for (int i = 0; i < 512; i++)
          {
+            double computation_value;
+
             // No fade active
             if (light_states->fade_delta[i] == 0)
-               dmx_frame[i] = light_states->fade_current[i];
+               computation_value = light_states->fade_current[i];
             else
             {
                // Increment fade progress
@@ -110,7 +114,7 @@ void LightRenderer::main_loop()
                {
                   // Compute light value
                   light_states->fade_current[i] = (double)(light_states->fade_end[i] - light_states->fade_start[i]) * ease_in_out_sine(light_states->fade_progress[i]) + light_states->fade_start[i];
-                  dmx_frame[i] = light_states->fade_current[i];
+                  computation_value = light_states->fade_current[i];
                }
             }
 
@@ -150,8 +154,11 @@ void LightRenderer::main_loop()
                }
 
                // Save new value into DMX frame
-               dmx_frame[i] = light_states->pushbutton_fade_current[i];
+               computation_value = light_states->pushbutton_fade_current[i];
             }
+
+            // Save computed value into dmx frame
+            dmx_frame[i] = map_brightness_limits(computation_value, brightness_limits->at(i));
          }
 
          // std::cout << (int)dmx_frame[0] << std::endl;
@@ -181,4 +188,23 @@ void LightRenderer::main_loop()
 double LightRenderer::ease_in_out_sine(double t)
 {
    return 0.5 * (1 + sin(3.1415926 * (t - 0.5)));
+}
+
+/*
+ * Maps brightness between 0 and 255 to a brightness within brightness limits
+ * Parameters:
+ *  - int value: value to map
+ *  - BrightnessLimits brightness_limits: brightness limits to use for the map
+ * Returns: mapped value
+ */
+unsigned char LightRenderer::map_brightness_limits(double value, BrightnessLimits brightness_limits)
+{
+   if (value < 1)
+      return 0;
+
+   if (value > 254)
+      return 255;
+
+   // Compute mapped value
+   return value * (brightness_limits.max - brightness_limits.min) / 255 + brightness_limits.min;
 }
