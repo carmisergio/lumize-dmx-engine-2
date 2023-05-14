@@ -39,7 +39,6 @@ bool DMXSender::start()
  */
 void DMXSender::send_frame(unsigned char *dmx_frame)
 {
-  std::cout << (int)dmx_frame[0] << std::endl;
   if (can_send)
   {
     if (
